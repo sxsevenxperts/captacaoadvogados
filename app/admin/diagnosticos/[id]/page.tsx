@@ -28,6 +28,7 @@ export default function DetalheDiagnostico() {
 
   const carregar = useCallback(async () => {
     setCarregando(true)
+    setErro('')
 
     const { data, error } = await supabase
       .from('diagnosticos')
@@ -46,17 +47,22 @@ export default function DetalheDiagnostico() {
     setObservacoes(data.observacoes ?? '')
     setProximaAcao(data.proxima_acao ?? '')
 
-    const { data: hist } = await supabase
+    const { data: hist, error: erroHistorico } = await supabase
       .from('historico_comercial')
       .select('*')
       .eq('diagnostico_id', id)
       .order('criado_em', { ascending: false })
 
     setHistorico(hist ?? [])
+    if (erroHistorico) {
+      setErro('Diagnóstico carregado, mas não foi possível carregar o histórico.')
+    }
     setCarregando(false)
   }, [supabase, id])
 
   useEffect(() => {
+    // A consulta sincroniza a tela com o registro externo identificado pela URL.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     carregar()
   }, [carregar])
 
@@ -66,8 +72,6 @@ export default function DetalheDiagnostico() {
     setSalvando(true)
     setAviso('')
     setErro('')
-
-    const statusMudou = diagnostico.status_comercial !== status
 
     const { error } = await supabase
       .from('diagnosticos')
@@ -84,20 +88,8 @@ export default function DetalheDiagnostico() {
       return
     }
 
-    if (statusMudou) {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        await supabase.from('historico_comercial').insert({
-          diagnostico_id: id,
-          status_anterior: diagnostico.status_comercial,
-          status_novo: status,
-          observacao: observacoes.trim() || null,
-          criado_por: user.id,
-        })
-      }
-    }
-
-    // Recarrega para refletir o estado real do banco e o histórico novo.
+    // O histórico de mudança de status é gravado atomicamente por trigger.
+    // Recarrega para refletir o estado real do banco e o evento novo.
     await carregar()
     setAviso('Alterações salvas.')
     setSalvando(false)
@@ -185,6 +177,7 @@ export default function DetalheDiagnostico() {
             Próxima ação
             <input
               value={proximaAcao}
+              maxLength={1000}
               onChange={(e) => setProximaAcao(e.target.value)}
               placeholder="Ex: enviar proposta até sexta"
             />
@@ -194,6 +187,7 @@ export default function DetalheDiagnostico() {
             Observações
             <textarea
               rows={5}
+              maxLength={10000}
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
               placeholder="Notas da conversa, objeções, contexto..."

@@ -43,6 +43,8 @@ export default function PaginaDiagnosticos() {
   }, [supabase, filtroStatus, ordenacao])
 
   useEffect(() => {
+    // A consulta sincroniza a tela com o Supabase sempre que os filtros mudam.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     carregar()
   }, [carregar])
 

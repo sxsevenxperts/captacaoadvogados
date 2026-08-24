@@ -40,6 +40,29 @@ export type CacResultado = {
   mensagem: string
 }
 
+function arredondar(valor: number | undefined, casas: number): number | undefined {
+  if (typeof valor !== 'number' || !Number.isFinite(valor)) return undefined
+  const fator = 10 ** casas
+  return Math.round((valor + Number.EPSILON) * fator) / fator
+}
+
+/**
+ * Espelha as precisões das colunas PostgreSQL antes do preview e do INSERT.
+ * Assim o usuário vê exatamente o mesmo CAC que o painel recalculará depois.
+ */
+export function normalizarCacInputs(inputs: Partial<CacInputs>): Partial<CacInputs> {
+  return {
+    investimentoMensal: arredondar(inputs.investimentoMensal, 2),
+    novosClientes:
+      typeof inputs.novosClientes === 'number' && Number.isInteger(inputs.novosClientes)
+        ? inputs.novosClientes
+        : undefined,
+    ticketMedio: arredondar(inputs.ticketMedio, 2),
+    margem: arredondar(inputs.margem, 3),
+    casosPorCliente: arredondar(inputs.casosPorCliente, 2),
+  }
+}
+
 /** Arredonda para 2 casas sem os artefatos de ponto flutuante do JS. */
 function duasCasas(valor: number): number {
   return Math.round((valor + Number.EPSILON) * 100) / 100
@@ -67,6 +90,8 @@ export function calcularCac(inputs: Partial<CacInputs>): CacResultado | null {
   ].every((v) => typeof v === 'number' && Number.isFinite(v))
 
   if (!preenchido) return null
+  if (investimentoMensal! < 0) return null
+  if (!Number.isInteger(novosClientes)) return null
   if (novosClientes! <= 0) return null
   if (ticketMedio! <= 0 || casosPorCliente! <= 0) return null
   if (margem! <= 0 || margem! > 1) return null

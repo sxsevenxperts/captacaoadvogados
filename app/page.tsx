@@ -9,7 +9,7 @@ import {
   identificarGargalo,
   gerarMensagemWhatsapp,
 } from '@/lib/diagnosis'
-import { calcularCac } from '@/lib/cac'
+import { calcularCac, normalizarCacInputs } from '@/lib/cac'
 import type { CacResultado } from '@/lib/cac'
 import { CacResumo } from './components/CacResumo'
 import type { DiagnosticoRespostas, PillarScores } from '@/lib/types'
@@ -80,9 +80,8 @@ export default function PaginaDiagnostico() {
     linkWhatsapp: string
   } | null>(null)
 
-  const cacPreview = useMemo(
-    () =>
-      calcularCac({
+  const cacInputs = useMemo(
+    () => normalizarCacInputs({
         investimentoMensal: numero(cacForm.investimentoMensal),
         novosClientes: numero(cacForm.novosClientes),
         ticketMedio: numero(cacForm.ticketMedio),
@@ -92,11 +91,22 @@ export default function PaginaDiagnostico() {
     [cacForm]
   )
 
+  const cacPreview = useMemo(() => calcularCac(cacInputs), [cacInputs])
+
   function avancarContato(e: React.FormEvent) {
     e.preventDefault()
     setErro('')
     if (!contato.nome.trim() || !contato.email.trim() || !contato.whatsapp.trim()) {
       setErro('Nome, e-mail e WhatsApp são obrigatórios.')
+      return
+    }
+    if (contato.nome.trim().length < 2) {
+      setErro('Informe um nome válido.')
+      return
+    }
+    const whatsappDigitos = contato.whatsapp.replace(/\D/g, '')
+    if (whatsappDigitos.length < 8 || whatsappDigitos.length > 15) {
+      setErro('Informe um WhatsApp válido, com DDD.')
       return
     }
     setEtapa('perguntas')
@@ -127,15 +137,11 @@ export default function PaginaDiagnostico() {
         cidade: contato.cidade.trim() || null,
         area: contato.area.trim() || null,
         respostas_json: respostas,
-        nota_geral: scores.media,
-        gargalo_principal: gargalo,
-        cac_investimento_mensal: incluirCac ? numero(cacForm.investimentoMensal) ?? null : null,
-        cac_novos_clientes: incluirCac ? numero(cacForm.novosClientes) ?? null : null,
-        cac_ticket_medio: incluirCac ? numero(cacForm.ticketMedio) ?? null : null,
-        cac_margem: incluirCac && numero(cacForm.margem) !== undefined
-          ? numero(cacForm.margem)! / 100
-          : null,
-        cac_casos_por_cliente: incluirCac ? numero(cacForm.casosPorCliente) ?? null : null,
+        cac_investimento_mensal: incluirCac ? cacInputs.investimentoMensal ?? null : null,
+        cac_novos_clientes: incluirCac ? cacInputs.novosClientes ?? null : null,
+        cac_ticket_medio: incluirCac ? cacInputs.ticketMedio ?? null : null,
+        cac_margem: incluirCac ? cacInputs.margem ?? null : null,
+        cac_casos_por_cliente: incluirCac ? cacInputs.casosPorCliente ?? null : null,
       })
 
       if (error) {
@@ -152,6 +158,8 @@ export default function PaginaDiagnostico() {
         linkWhatsapp: `https://wa.me/${contato.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(mensagem)}`,
       })
       setEtapa('resultado')
+    } catch {
+      setErro('Não foi possível enviar o diagnóstico. Tente novamente.')
     } finally {
       setEnviando(false)
     }
@@ -167,19 +175,19 @@ export default function PaginaDiagnostico() {
         {etapa === 'contato' && (
           <form onSubmit={avancarContato} className={styles.form}>
             <h2>Seus dados</h2>
-            <input placeholder="Nome completo *" value={contato.nome}
+            <input placeholder="Nome completo *" value={contato.nome} maxLength={200}
               onChange={(e) => setContato({ ...contato, nome: e.target.value })} required />
-            <input type="email" placeholder="E-mail *" value={contato.email}
+            <input type="email" placeholder="E-mail *" value={contato.email} maxLength={320}
               onChange={(e) => setContato({ ...contato, email: e.target.value })} required />
-            <input type="tel" placeholder="WhatsApp * (11 99999-9999)" value={contato.whatsapp}
+            <input type="tel" placeholder="WhatsApp * (11 99999-9999)" value={contato.whatsapp} maxLength={30}
               onChange={(e) => setContato({ ...contato, whatsapp: e.target.value })} required />
-            <input placeholder="Instagram" value={contato.instagram}
+            <input placeholder="Instagram" value={contato.instagram} maxLength={200}
               onChange={(e) => setContato({ ...contato, instagram: e.target.value })} />
-            <input placeholder="Site" value={contato.site}
+            <input placeholder="Site" value={contato.site} maxLength={500}
               onChange={(e) => setContato({ ...contato, site: e.target.value })} />
-            <input placeholder="Cidade" value={contato.cidade}
+            <input placeholder="Cidade" value={contato.cidade} maxLength={120}
               onChange={(e) => setContato({ ...contato, cidade: e.target.value })} />
-            <input placeholder="Área de atuação" value={contato.area}
+            <input placeholder="Área de atuação" value={contato.area} maxLength={120}
               onChange={(e) => setContato({ ...contato, area: e.target.value })} />
             <button type="submit">Começar diagnóstico</button>
           </form>
@@ -307,4 +315,3 @@ function Score({ rotulo, valor }: { rotulo: string; valor: number }) {
     </div>
   )
 }
-

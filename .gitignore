@@ -33,3 +33,6 @@ yarn-error.log*
 # Lock files (optional, based on team preference)
 # package-lock.json
 # yarn.lock
+
+# Config local de ferramentas
+.claude/

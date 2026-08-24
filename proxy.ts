@@ -5,10 +5,10 @@ const LOGIN = '/admin/login'
 
 /**
  * Proteção de /admin no servidor: a requisição é barrada antes de qualquer
- * HTML sair daqui. O RLS continua sendo a defesa dos dados; este middleware
- * é a segunda camada, para que a rota não seja apenas escondida no cliente.
+ * HTML sair daqui. O RLS continua sendo a defesa dos dados; este proxy é a
+ * segunda camada, para que a rota não seja apenas escondida no cliente.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -41,7 +41,6 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (pathname === LOGIN) {
-    // Já autenticado e autorizado? Não faz sentido ver o login de novo.
     if (user && (await ehAdmin(supabase, user.id))) {
       const url = request.nextUrl.clone()
       url.pathname = '/admin/diagnosticos'

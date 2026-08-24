@@ -1,13 +1,14 @@
 'use client'
 
 import { useMemo } from 'react'
+import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { criarClienteNavegador } from '@/lib/supabase/client'
 import styles from './layout.module.css'
 
 /**
  * Este layout é apenas a moldura visual. Quem barra o acesso é o
- * `middleware.ts`, no servidor — nenhuma rota /admin chega ao navegador
+ * `proxy.ts`, no servidor — nenhuma rota /admin chega ao navegador
  * sem uma linha correspondente em `admins`.
  */
 export default function AdminLayout({
@@ -28,12 +29,12 @@ export default function AdminLayout({
       <nav className={styles.navbar}>
         <div className={styles.logo}>Seven Xperts</div>
         <div className={styles.menu}>
-          <a
+          <Link
             href="/admin/diagnosticos"
             className={pathname.startsWith('/admin/diagnosticos') ? styles.active : ''}
           >
             Diagnósticos
-          </a>
+          </Link>
         </div>
         <button
           className={styles.logout}

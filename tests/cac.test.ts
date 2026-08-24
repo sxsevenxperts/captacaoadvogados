@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { calcularCac, RAZAO_ALVO } from '../lib/cac'
+import { calcularCac, normalizarCacInputs, RAZAO_ALVO } from '../lib/cac'
 
 const BASE = {
   investimentoMensal: 5000,
@@ -86,4 +86,28 @@ test('nunca devolve NaN', () => {
   const r = calcularCac({ ...BASE, investimentoMensal: 0 })!
   assert.equal(r.cac, 0)
   assert.ok(!Number.isNaN(r.lucroPorCliente))
+})
+
+test('investimento negativo e rejeitado antes do banco', () => {
+  assert.equal(calcularCac({ ...BASE, investimentoMensal: -1 }), null)
+})
+
+test('quantidade de clientes precisa ser inteira', () => {
+  assert.equal(calcularCac({ ...BASE, novosClientes: 2.5 }), null)
+})
+
+test('normalizacao espelha as precisões do PostgreSQL', () => {
+  assert.deepEqual(normalizarCacInputs({
+    investimentoMensal: 100.005,
+    novosClientes: 3,
+    ticketMedio: 8000.005,
+    margem: 0.3334,
+    casosPorCliente: 1.005,
+  }), {
+    investimentoMensal: 100.01,
+    novosClientes: 3,
+    ticketMedio: 8000.01,
+    margem: 0.333,
+    casosPorCliente: 1.01,
+  })
 })

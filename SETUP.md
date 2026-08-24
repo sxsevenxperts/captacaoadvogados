@@ -59,21 +59,24 @@ volte ao passo (a) e confirme o e-mail.
 ## 5. Rodar local
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
 Testes da lógica de cálculo:
 
 ```bash
+npm run lint
 npm test
+npm run build
 ```
 
 ---
 
 ## 6. Deploy no EasyPanel
 
-- Build: `npm install && npm run build`
+- Runtime: Node.js 22 LTS (mínimo técnico do Next.js: Node 20.9)
+- Build: `npm ci && npm run build`
 - Start: `npm run start`
 - Porta: `3000`
 - Variáveis: as mesmas do `.env.local`
@@ -89,7 +92,7 @@ Três camadas independentes:
 
 1. **GRANT** — `anon` só tem `INSERT` em `diagnosticos`. Nem privilégio de leitura tem.
 2. **RLS** — sem linha em `admins`, o banco não devolve nenhum diagnóstico.
-3. **Middleware** (`middleware.ts`) — `/admin/*` é barrado no servidor, antes de
+3. **Proxy** (`proxy.ts`) — `/admin/*` é barrado no servidor, antes de
    qualquer HTML sair. Usa `getUser()`, que revalida o token, e não `getSession()`,
    que apenas lê um cookie falsificável.
 
@@ -97,10 +100,10 @@ Três camadas independentes:
 |---|---|---|---|
 | Anônimo | INSERT | — | — |
 | Autenticado fora de `admins` | — | — | — |
-| Admin | SELECT + UPDATE | própria linha | SELECT + INSERT |
+| Admin | SELECT + UPDATE comercial | própria linha | SELECT; INSERT automático por trigger |
 
 A sessão fica em **cookie** (`@supabase/ssr`), não em localStorage — é o que
-permite o middleware enxergá-la no servidor.
+permite o proxy enxergá-la no servidor.
 
 ---
 
@@ -119,6 +122,9 @@ permite o middleware enxergá-la no servidor.
 - Score do pilar = média das suas 3 respostas
 - Nota geral = média dos 5 pilares, calculada a partir dos valores brutos
 - Gargalo = menor pilar; empate resolve pela ordem do funil
+
+`nota_geral` e `gargalo_principal` são calculados novamente por trigger no
+banco; o navegador não tem privilégio para escolher esses valores.
 
 O banco recusa qualquer diagnóstico que não tenha as 15 respostas entre 1 e 10
 (constraint `respostas_completas`).
