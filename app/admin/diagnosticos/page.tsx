@@ -1,140 +1,159 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { criarClienteNavegador } from '@/lib/supabase/client'
+import { calcularCac, formatarReal } from '@/lib/cac'
+import { STATUS_COMERCIAL } from '@/lib/types'
 import type { Diagnostico } from '@/lib/types'
 import styles from './diagnosticos.module.css'
 
-const statusOptions = [
-  'NOVO',
-  'CONTATO_PENDENTE',
-  'PROPOSTA_ENVIADA',
-  'NEGOCIACAO',
-  'FECHADO',
-  'REJEITADO',
-]
+type Ordenacao = 'recentes' | 'pior_nota' | 'melhor_nota'
 
-export default function DiagnosticosPage() {
+export default function PaginaDiagnosticos() {
+  const supabase = useMemo(() => criarClienteNavegador(), [])
+
   const [diagnosticos, setDiagnosticos] = useState<Diagnostico[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [sortBy, setSortBy] = useState<'criado_em' | 'nota_geral'>('criado_em')
+  const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState('')
+  const [busca, setBusca] = useState('')
+  const [filtroStatus, setFiltroStatus] = useState('')
+  const [ordenacao, setOrdenacao] = useState<Ordenacao>('recentes')
+
+  const carregar = useCallback(async () => {
+    setCarregando(true)
+    setErro('')
+
+    let query = supabase.from('diagnosticos').select('*')
+
+    if (filtroStatus) query = query.eq('status_comercial', filtroStatus)
+
+    if (ordenacao === 'recentes') query = query.order('criado_em', { ascending: false })
+    else query = query.order('nota_geral', { ascending: ordenacao === 'pior_nota' })
+
+    const { data, error } = await query
+
+    if (error) {
+      setErro('Não foi possível carregar os diagnósticos.')
+      setDiagnosticos([])
+    } else {
+      setDiagnosticos(data ?? [])
+    }
+    setCarregando(false)
+  }, [supabase, filtroStatus, ordenacao])
 
   useEffect(() => {
-    loadDiagnosticos()
-  }, [statusFilter, sortBy])
+    carregar()
+  }, [carregar])
 
-  async function loadDiagnosticos() {
-    setLoading(true)
-    try {
-      let query = supabase.from('diagnosticos').select('*')
+  // A busca é local: o conjunto é pequeno e o filtro fica instantâneo.
+  const filtrados = useMemo(() => {
+    const termo = busca.trim().toLowerCase()
+    if (!termo) return diagnosticos
 
-      if (statusFilter) {
-        query = query.eq('status_comercial', statusFilter)
-      }
+    // Só dígitos do termo, para casar telefone independente da formatação.
+    const digitos = termo.replace(/\D/g, '')
 
-      if (sortBy === 'criado_em') {
-        query = query.order('criado_em', { ascending: false })
-      } else {
-        query = query.order('nota_geral', { ascending: false })
-      }
-
-      const { data, error } = await query
-
-      if (error) {
-        console.error('Erro ao carregar:', error)
-        return
-      }
-
-      setDiagnosticos(data || [])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const filtered = diagnosticos.filter((d) =>
-    d.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.whatsapp.includes(searchTerm)
-  )
+    return diagnosticos.filter((d) => {
+      return (
+        d.nome.toLowerCase().includes(termo) ||
+        d.email.toLowerCase().includes(termo) ||
+        (d.cidade?.toLowerCase().includes(termo) ?? false) ||
+        (d.area?.toLowerCase().includes(termo) ?? false) ||
+        (digitos.length > 0 && d.whatsapp.replace(/\D/g, '').includes(digitos))
+      )
+    })
+  }, [diagnosticos, busca])
 
   return (
     <div className={styles.container}>
-      <h1>Diagnósticos</h1>
+      <header className={styles.cabecalho}>
+        <h1>Diagnósticos</h1>
+        <span className={styles.contagem}>
+          {filtrados.length} de {diagnosticos.length}
+        </span>
+      </header>
 
-      <div className={styles.controls}>
+      <div className={styles.controles}>
         <input
-          type="text"
-          placeholder="Buscar por nome, email ou WhatsApp..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className={styles.search}
+          className={styles.busca}
+          placeholder="Buscar por nome, e-mail, WhatsApp, cidade ou área..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
         />
-
         <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className={styles.filter}
+          className={styles.filtro}
+          value={filtroStatus}
+          onChange={(e) => setFiltroStatus(e.target.value)}
         >
-          <option value="">Todos os Status</option>
-          {statusOptions.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
+          <option value="">Todos os status</option>
+          {STATUS_COMERCIAL.map((s) => (
+            <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
           ))}
         </select>
-
         <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as any)}
-          className={styles.filter}
+          className={styles.filtro}
+          value={ordenacao}
+          onChange={(e) => setOrdenacao(e.target.value as Ordenacao)}
         >
-          <option value="criado_em">Mais Recentes</option>
-          <option value="nota_geral">Melhor Score</option>
+          <option value="recentes">Mais recentes</option>
+          <option value="pior_nota">Pior nota primeiro</option>
+          <option value="melhor_nota">Melhor nota primeiro</option>
         </select>
       </div>
 
-      {loading ? (
-        <p className={styles.loading}>Carregando...</p>
-      ) : filtered.length === 0 ? (
-        <p className={styles.empty}>Nenhum diagnóstico encontrado</p>
+      {erro && <div className={styles.erro}>{erro}</div>}
+
+      {carregando ? (
+        <p className={styles.vazio}>Carregando...</p>
+      ) : filtrados.length === 0 ? (
+        <p className={styles.vazio}>Nenhum diagnóstico encontrado.</p>
       ) : (
-        <div className={styles.table}>
-          <div className={styles.header}>
-            <div className={styles.col_name}>Nome</div>
-            <div className={styles.col_email}>Email</div>
-            <div className={styles.col_score}>Score</div>
-            <div className={styles.col_status}>Status</div>
-            <div className={styles.col_action}>Ação</div>
+        <div className={styles.tabela}>
+          <div className={styles.thead}>
+            <div>Nome</div>
+            <div>Contato</div>
+            <div>Nota</div>
+            <div>Gargalo</div>
+            <div>CAC</div>
+            <div>Status</div>
+            <div />
           </div>
 
-          {filtered.map((diagnostico) => (
-            <div key={diagnostico.id} className={styles.row}>
-              <div className={styles.col_name}>{diagnostico.nome}</div>
-              <div className={styles.col_email}>{diagnostico.email}</div>
-              <div className={styles.col_score}>
-                <span className={styles.badge}>
-                  {diagnostico.nota_geral.toFixed(1)}/10
-                </span>
+          {filtrados.map((d) => {
+            const cac = calcularCac({
+              investimentoMensal: d.cac_investimento_mensal ?? undefined,
+              novosClientes: d.cac_novos_clientes ?? undefined,
+              ticketMedio: d.cac_ticket_medio ?? undefined,
+              margem: d.cac_margem ?? undefined,
+              casosPorCliente: d.cac_casos_por_cliente ?? undefined,
+            })
+
+            return (
+              <div key={d.id} className={styles.linha}>
+                <div className={styles.nome}>{d.nome}</div>
+                <div className={styles.contato}>
+                  <span>{d.email}</span>
+                  <small>{d.whatsapp}</small>
+                </div>
+                <div>
+                  <span className={styles.nota}>{Number(d.nota_geral).toFixed(1)}</span>
+                </div>
+                <div className={styles.gargalo}>{d.gargalo_principal}</div>
+                <div className={styles.cac}>
+                  {cac ? formatarReal(cac.cac) : '—'}
+                </div>
+                <div>
+                  <span className={`${styles.status} ${styles[d.status_comercial.toLowerCase()]}`}>
+                    {d.status_comercial.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <div className={styles.acao}>
+                  <Link href={`/admin/diagnosticos/${d.id}`}>Abrir</Link>
+                </div>
               </div>
-              <div className={styles.col_status}>
-                <span
-                  className={
-                    styles[`status_${diagnostico.status_comercial.toLowerCase()}`]
-                  }
-                >
-                  {diagnostico.status_comercial}
-                </span>
-              </div>
-              <div className={styles.col_action}>
-                <Link href={`/admin/diagnosticos/${diagnostico.id}`}>
-                  Ver Detalhes
-                </Link>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

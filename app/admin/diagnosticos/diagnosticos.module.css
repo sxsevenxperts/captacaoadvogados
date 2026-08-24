@@ -3,181 +3,186 @@
   margin: 0 auto;
 }
 
-.container h1 {
-  color: #2c3e50;
-  margin-bottom: 30px;
-  font-size: 28px;
+.cabecalho {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 24px;
 }
 
-.controls {
+.cabecalho h1 {
+  color: #2c3e50;
+  font-size: 26px;
+}
+
+.contagem {
+  color: #999;
+  font-size: 13px;
+}
+
+.controles {
   display: grid;
   grid-template-columns: 1fr 200px 200px;
-  gap: 15px;
-  margin-bottom: 30px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.search,
-.filter {
-  padding: 12px;
+.busca,
+.filtro {
+  padding: 11px 12px;
   border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 14px;
+  background: white;
 }
 
-.search:focus,
-.filter:focus {
+.busca:focus,
+.filtro:focus {
   outline: none;
   border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
 }
 
-.loading,
-.empty {
+.erro {
+  background: #fdecea;
+  border: 1px solid #f5c2c0;
+  color: #9b1c16;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.vazio {
   text-align: center;
   color: #999;
-  padding: 40px;
+  padding: 48px 0;
 }
 
-.table {
+.tabela {
   background: white;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
-.header {
+.thead,
+.linha {
   display: grid;
-  grid-template-columns: 2fr 2fr 1fr 1.5fr 1.5fr;
-  gap: 0;
-  background: #f5f5f5;
-  border-bottom: 1px solid #ddd;
-  padding: 15px 20px;
-  font-weight: 600;
-  color: #666;
-  font-size: 13px;
-  text-transform: uppercase;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 2fr 2fr 1fr 1.5fr 1.5fr;
-  gap: 0;
-  padding: 15px 20px;
-  border-bottom: 1px solid #eee;
+  grid-template-columns: 1.4fr 1.8fr 0.6fr 1fr 1fr 1.2fr 0.7fr;
+  gap: 12px;
   align-items: center;
-  transition: background 0.2s;
+  padding: 14px 18px;
 }
 
-.row:hover {
-  background: #f9f9f9;
+.thead {
+  background: #f7f7f9;
+  border-bottom: 1px solid #e6e6e6;
+  font-size: 11px;
+  font-weight: 700;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 
-.col_name,
-.col_email {
+.linha {
+  border-bottom: 1px solid #f0f0f0;
   font-size: 14px;
-  color: #333;
+}
+
+.linha:last-child {
+  border-bottom: none;
+}
+
+.linha:hover {
+  background: #fafbff;
+}
+
+.nome {
+  font-weight: 600;
+  color: #222;
+}
+
+.contato {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.contato span,
+.contato small {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.col_score {
-  text-align: center;
+.contato small {
+  color: #999;
 }
 
-.badge {
+.nota {
   display: inline-block;
-  padding: 4px 12px;
-  background: #667eea;
-  color: white;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 3px 10px;
+  background: #eef0fd;
+  color: #4a58c4;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 13px;
 }
 
-.col_status {
-  text-align: center;
+.gargalo,
+.cac {
+  color: #555;
 }
 
-.status_novo,
-.status_contato_pendente,
-.status_proposta_enviada,
-.status_negociacao,
-.status_fechado,
-.status_rejeitado {
+.status {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 3px 9px;
   border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
-.status_novo {
-  background: #e3f2fd;
-  color: #1976d2;
-}
+.novo              { background: #e3f2fd; color: #1565c0; }
+.contato_pendente  { background: #fff3e0; color: #e65100; }
+.proposta_enviada  { background: #f3e5f5; color: #6a1b9a; }
+.negociacao        { background: #fce4ec; color: #ad1457; }
+.fechado           { background: #e8f5e9; color: #2e7d32; }
+.rejeitado         { background: #ffebee; color: #c62828; }
 
-.status_contato_pendente {
-  background: #fff3e0;
-  color: #f57c00;
-}
-
-.status_proposta_enviada {
-  background: #f3e5f5;
-  color: #7b1fa2;
-}
-
-.status_negociacao {
-  background: #fce4ec;
-  color: #c2185b;
-}
-
-.status_fechado {
-  background: #e8f5e9;
-  color: #388e3c;
-}
-
-.status_rejeitado {
-  background: #ffebee;
-  color: #d32f2f;
-}
-
-.col_action {
+.acao {
   text-align: right;
 }
 
-.col_action a {
+.acao a {
   color: #667eea;
   text-decoration: none;
-  font-size: 14px;
   font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 4px;
-  transition: background 0.2s;
+  font-size: 13px;
 }
 
-.col_action a:hover {
-  background: rgba(102, 126, 234, 0.1);
+.acao a:hover {
+  text-decoration: underline;
 }
 
-@media (max-width: 768px) {
-  .controls {
+@media (max-width: 900px) {
+  .controles {
     grid-template-columns: 1fr;
   }
 
-  .header,
-  .row {
-    grid-template-columns: 1fr;
+  .thead {
+    display: none;
   }
 
-  .header div,
-  .row > div {
-    padding: 8px 0;
+  .linha {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 8px;
   }
 
-  .col_action {
+  .acao {
     text-align: left;
-    margin-top: 10px;
   }
 }

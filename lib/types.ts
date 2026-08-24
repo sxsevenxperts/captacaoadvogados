@@ -1,19 +1,41 @@
+export const STATUS_COMERCIAL = [
+  'NOVO',
+  'CONTATO_PENDENTE',
+  'PROPOSTA_ENVIADA',
+  'NEGOCIACAO',
+  'FECHADO',
+  'REJEITADO',
+] as const
+
+export type StatusComercial = (typeof STATUS_COMERCIAL)[number]
+
+export type DiagnosticoRespostas = {
+  q1: number;  q2: number;  q3: number;  q4: number;  q5: number
+  q6: number;  q7: number;  q8: number;  q9: number;  q10: number
+  q11: number; q12: number; q13: number; q14: number; q15: number
+}
+
 export type Diagnostico = {
   id: string
   nome: string
   email: string
   whatsapp: string
-  instagram?: string
-  site?: string
-  cidade?: string
-  area?: string
-  respostas_json: Record<string, number>
+  instagram: string | null
+  site: string | null
+  cidade: string | null
+  area: string | null
+  respostas_json: DiagnosticoRespostas
   nota_geral: number
   gargalo_principal: string
+  cac_investimento_mensal: number | null
+  cac_novos_clientes: number | null
+  cac_ticket_medio: number | null
+  cac_margem: number | null
+  cac_casos_por_cliente: number | null
   criado_em: string
-  status_comercial: 'NOVO' | 'CONTATO_PENDENTE' | 'PROPOSTA_ENVIADA' | 'NEGOCIACAO' | 'FECHADO' | 'REJEITADO'
-  proxima_acao?: string
-  observacoes?: string
+  status_comercial: StatusComercial
+  proxima_acao: string | null
+  observacoes: string | null
 }
 
 export type Admin = {
@@ -27,27 +49,11 @@ export type Admin = {
 export type HistoricoComercial = {
   id: string
   diagnostico_id: string
-  status_anterior: string
+  status_anterior: string | null
   status_novo: string
-  observacao?: string
+  observacao: string | null
   criado_por: string
   criado_em: string
-}
-
-export type DiagnosticoRespostas = {
-  q1: number
-  q2: number
-  q3: number
-  q4: number
-  q5: number
-  q6: number
-  q7: number
-  q8: number
-  q9: number
-  q10: number
-  q11: number
-  q12: number
-  q13: number
 }
 
 export type PillarScores = {

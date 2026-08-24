@@ -1,84 +1,75 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { criarClienteNavegador } from '@/lib/supabase/client'
 import styles from './login.module.css'
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+export default function PaginaLogin() {
+  const supabase = useMemo(() => criarClienteNavegador(), [])
   const router = useRouter()
 
-  async function handleLogin(e: React.FormEvent) {
+  const [email, setEmail] = useState('')
+  const [senha, setSenha] = useState('')
+  const [carregando, setCarregando] = useState(false)
+  const [erro, setErro] = useState('')
+
+  async function entrar(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
-    setLoading(true)
+    setErro('')
+    setCarregando(true)
 
-    try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password: senha,
+    })
 
-      if (authError) {
-        setError(authError.message)
-        setLoading(false)
-        return
-      }
-
-      // Verificar se é admin
-      const { data: admin } = await supabase
-        .from('admins')
-        .select('id')
-        .eq('id', data.user!.id)
-        .maybeSingle()
-
-      if (!admin) {
-        await supabase.auth.signOut()
-        setError('Você não tem acesso ao painel administrativo')
-        setLoading(false)
-        return
-      }
-
-      router.push('/admin/diagnosticos')
-    } catch (err) {
-      setError('Erro ao fazer login')
-      setLoading(false)
+    if (error || !data.user) {
+      setErro('E-mail ou senha inválidos.')
+      setCarregando(false)
+      return
     }
+
+    // Autenticar não basta: só entra quem tem linha em `admins`.
+    const { data: admin } = await supabase
+      .from('admins')
+      .select('id')
+      .eq('id', data.user.id)
+      .maybeSingle()
+
+    if (!admin) {
+      await supabase.auth.signOut()
+      setErro('Esta conta não tem acesso ao painel.')
+      setCarregando(false)
+      return
+    }
+
+    // refresh() força o middleware a rodar de novo já com o cookie da sessão.
+    router.replace('/admin/diagnosticos')
+    router.refresh()
   }
 
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <h1>Seven Xperts Admin</h1>
-        <p>Painel de Diagnósticos</p>
+        <h1>Seven Xperts</h1>
+        <p>Painel de diagnósticos</p>
 
-        <form onSubmit={handleLogin} className={styles.form}>
-          {error && <div className={styles.error}>{error}</div>}
+        <form onSubmit={entrar} className={styles.form}>
+          {erro && <div className={styles.erro}>{erro}</div>}
 
           <input
-            type="email"
-            placeholder="Email"
-            value={email}
+            type="email" placeholder="E-mail" value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={loading}
+            required disabled={carregando} autoComplete="username"
           />
-
           <input
-            type="password"
-            placeholder="Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={loading}
+            type="password" placeholder="Senha" value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            required disabled={carregando} autoComplete="current-password"
           />
-
-          <button type="submit" disabled={loading}>
-            {loading ? 'Entrando...' : 'Entrar'}
+          <button type="submit" disabled={carregando}>
+            {carregando ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
       </div>

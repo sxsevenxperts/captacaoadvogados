@@ -1,59 +1,58 @@
 # Seven Xperts — Diagnóstico de Captação
 
-MVP: formulário público de diagnóstico + painel administrativo.
+Formulário público de diagnóstico + painel administrativo.
 
 **Rotas**
-- `/` — formulário público (13 perguntas)
-- `/admin/login` — login
-- `/admin/diagnosticos` — lista com busca/filtro/ordenação
-- `/admin/diagnosticos/:id` — detalhe, status comercial, observações
+- `/` — diagnóstico público: contato → 15 perguntas → calculadora de CAC (opcional) → resultado
+- `/admin/login`
+- `/admin/diagnosticos` — lista com busca, filtro e ordenação
+- `/admin/diagnosticos/:id` — detalhe, status comercial, observações, histórico
 
 ---
 
 ## 1. Regenerar as chaves do Supabase
 
-As chaves compartilhadas anteriormente estão comprometidas.
-
-Supabase Dashboard → Settings → API → regenerar `anon` e `service_role`.
+As chaves compartilhadas por chat estão comprometidas.
+Dashboard → Settings → API → regenerar `anon` e `service_role`.
 
 ---
 
 ## 2. Rodar o SQL
 
-Supabase Dashboard → SQL Editor → cole todo o conteúdo de `sql/schema.sql` → Run.
+SQL Editor → cole `sql/schema.sql` inteiro → Run. É idempotente.
 
-O script é idempotente: pode rodar de novo se der erro no meio.
+Depois, para **provar** que o RLS está fechado, rode `sql/verificar-rls.sql`.
+Ele testa dentro de uma transação e faz ROLLBACK — não grava nada.
+No fim deve imprimir `=== TODOS OS TESTES PASSARAM ===`.
 
 ---
 
 ## 3. Variáveis de ambiente
 
-Crie `.env.local` na raiz:
+`.env.local` na raiz:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=SUA_CHAVE_ANON_NOVA
 ```
 
-Encontre em Settings → API. **Nunca** coloque a `service_role` aqui — este é um app client-side e a chave iria para o navegador.
+Nunca coloque a `service_role` aqui — é um app com código no navegador.
 
 ---
 
 ## 4. Criar o primeiro administrador
 
-**a)** Authentication → Users → **Add user**
-- Email e senha
-- Marque *Auto Confirm User* (senão o login falha por email não confirmado)
-- Copie o **UUID** do usuário criado
+**a) Criar a conta** (você faz, no painel — envolve senha):
+Authentication → Users → **Add user**
+- E-mail e senha
+- Marque **Auto Confirm User**, senão o login falha
 
-**b)** SQL Editor:
+**b) Autorizar no painel:**
+SQL Editor → `sql/criar-admin.sql`, trocando e-mail e nome.
+O script resolve o UUID pelo e-mail sozinho — sem copiar id à mão.
 
-```sql
-INSERT INTO admins (id, email, nome, role)
-VALUES ('COLE-O-UUID-AQUI', 'seu@email.com', 'Seu Nome', 'admin');
-```
-
-O `id` precisa ser exatamente o UUID do Auth — é assim que o RLS reconhece o admin.
+Ele já devolve uma linha de confirmação. Se `email_confirmed_at` vier `NULL`,
+volte ao passo (a) e confirme o e-mail.
 
 ---
 
@@ -64,34 +63,80 @@ npm install
 npm run dev
 ```
 
-- http://localhost:3000 — formulário
-- http://localhost:3000/admin/login — painel
+Testes da lógica de cálculo:
+
+```bash
+npm test
+```
 
 ---
 
 ## 6. Deploy no EasyPanel
 
-Build command: `npm install && npm run build`
-Start command: `npm run start`
-Porta: `3000`
+- Build: `npm install && npm run build`
+- Start: `npm run start`
+- Porta: `3000`
+- Variáveis: as mesmas do `.env.local`
 
-Variáveis de ambiente no painel do EasyPanel (as mesmas do `.env.local`).
-
-Elas são lidas **em build time** — se mudar uma variável, precisa rebuildar, não só reiniciar.
+As variáveis `NEXT_PUBLIC_*` são embutidas **em build time**. Trocar uma
+exige rebuild, não basta reiniciar.
 
 ---
 
 ## Modelo de segurança
 
-A proteção real dos dados é o **RLS no Postgres**, não a interface:
+Três camadas independentes:
+
+1. **GRANT** — `anon` só tem `INSERT` em `diagnosticos`. Nem privilégio de leitura tem.
+2. **RLS** — sem linha em `admins`, o banco não devolve nenhum diagnóstico.
+3. **Middleware** (`middleware.ts`) — `/admin/*` é barrado no servidor, antes de
+   qualquer HTML sair. Usa `getUser()`, que revalida o token, e não `getSession()`,
+   que apenas lê um cookie falsificável.
 
 | Quem | diagnosticos | admins | historico |
 |---|---|---|---|
-| Visitante anônimo | INSERT apenas | nada | nada |
-| Autenticado fora de `admins` | nada | nada | nada |
-| Admin (linha em `admins`) | SELECT + UPDATE | própria linha | SELECT + INSERT |
+| Anônimo | INSERT | — | — |
+| Autenticado fora de `admins` | — | — | — |
+| Admin | SELECT + UPDATE | própria linha | SELECT + INSERT |
 
-Mesmo que alguém abra `/admin/diagnosticos` no navegador, o banco não devolve nenhuma linha sem uma linha correspondente em `admins`.
+A sessão fica em **cookie** (`@supabase/ssr`), não em localStorage — é o que
+permite o middleware enxergá-la no servidor.
+
+---
+
+## Como o diagnóstico é calculado
+
+15 perguntas, escala 1–10, **3 por pilar**:
+
+| Pilar | Perguntas |
+|---|---|
+| Aquisição | q1–q3 |
+| Triagem | q4–q6 |
+| Conversão | q7–q9 |
+| CRM | q10–q12 |
+| Gestão | q13–q15 |
+
+- Score do pilar = média das suas 3 respostas
+- Nota geral = média dos 5 pilares, calculada a partir dos valores brutos
+- Gargalo = menor pilar; empate resolve pela ordem do funil
+
+O banco recusa qualquer diagnóstico que não tenha as 15 respostas entre 1 e 10
+(constraint `respostas_completas`).
+
+## Calculadora de CAC
+
+```
+CAC   = investimento mensal ÷ novos clientes
+LTV   = ticket médio × margem × casos por cliente
+Razão = LTV ÷ CAC        (referência de mercado: 3:1)
+```
+
+Só as **entradas** são gravadas; CAC, LTV e razão são derivados em código, então
+o resultado é sempre reproduzível a partir do que o lead informou.
+
+Referências: [Paddle](https://www.paddle.com/resources/cac-ltv-ratio) ·
+[Wall Street Prep](https://www.wallstreetprep.com/knowledge/ltv-cac-ratio/) ·
+[Chargebee](https://www.chargebee.com/resources/glossaries/ltv-cac-ratio/)
 
 ---
 
@@ -99,8 +144,9 @@ Mesmo que alguém abra `/admin/diagnosticos` no navegador, o banco não devolve 
 
 | Erro | Causa |
 |---|---|
-| `function auth.user_id() does not exist` | SQL antigo. Use o `sql/schema.sql` atual (usa `auth.uid()`). |
-| `infinite recursion detected in policy` | Política em `admins` consultando `admins`. Resolvido pela função `is_admin()` com SECURITY DEFINER. |
-| Login diz "sem acesso" | Falta a linha em `admins`, ou o `id` não bate com o UUID do Auth. |
-| Login falha silenciosamente | Usuário não confirmado no Auth. |
-| Lista vazia com admin logado | Confira `SELECT * FROM admins WHERE id = auth.uid()`. |
+| `function auth.user_id() does not exist` | SQL antigo. Use o `sql/schema.sql` atual (`auth.uid()`). |
+| `infinite recursion detected in policy` | Política em `admins` consultando `admins`. Resolvido por `is_admin()` com SECURITY DEFINER. |
+| Login diz "sem acesso ao painel" | Falta a linha em `admins`. Rode `sql/criar-admin.sql`. |
+| Login não passa e não mostra erro | Usuário sem `email_confirmed_at`. |
+| Lista vazia com admin logado | Rode `sql/verificar-rls.sql` para localizar a camada que está barrando. |
+| Formulário não envia | `anon` precisa de `GRANT INSERT`. Reexecute o `schema.sql`. |

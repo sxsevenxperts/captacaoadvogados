@@ -1,0 +1,45 @@
+.box {
+  border: 1px solid #ddd;
+  border-left: 4px solid #667eea;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  background: #fafafa;
+  text-align: left;
+}
+
+.linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 14px;
+  border-bottom: 1px solid #eee;
+}
+
+.linha:last-of-type {
+  border-bottom: none;
+}
+
+.linha span {
+  color: #666;
+}
+
+.linha strong {
+  color: #222;
+  white-space: nowrap;
+}
+
+.mensagem {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #555;
+}
+
+/* Veredito — a cor da borda comunica a saúde da conta */
+.prejuizo       { border-left-color: #d32f2f; }
+.apertado       { border-left-color: #f57c00; }
+.saudavel       { border-left-color: #388e3c; }
+.subinvestindo  { border-left-color: #1976d2; }
