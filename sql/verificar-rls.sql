@@ -1,11 +1,15 @@
 -- ============================================================================
 -- VERIFICAÇÃO DO RLS
 --
--- Cole tudo no SQL Editor do Supabase e execute. O script roda dentro de uma
--- transação e faz ROLLBACK no fim: nada é gravado.
+-- Cole tudo no SQL Editor do Supabase e execute. Roda dentro de uma transação
+-- e faz ROLLBACK no fim: nada é gravado.
 --
--- Se aparecer "TODOS OS TESTES PASSARAM", o RLS está correto.
+-- Sucesso = a última mensagem é "TODOS OS TESTES PASSARAM".
 -- Qualquer falha interrompe a execução com uma mensagem começando por FALHA.
+--
+-- Um acesso pode ser barrado de duas formas, ambas aprovadas:
+--   - RLS devolve 0 linhas
+--   - o GRANT nega o privilégio (erro 42501) — barreira ainda mais forte
 -- ============================================================================
 
 BEGIN;
@@ -21,7 +25,7 @@ INSERT INTO diagnosticos (
 );
 
 -- ---------------------------------------------------------------------------
--- 1. Visitante anônimo NÃO pode ler diagnósticos
+-- 1. Visitante anônimo NÃO lê diagnósticos
 -- ---------------------------------------------------------------------------
 SET LOCAL ROLE anon;
 
@@ -32,11 +36,14 @@ BEGIN
   IF n <> 0 THEN
     RAISE EXCEPTION 'FALHA 1: anon leu % linha(s) de diagnosticos', n;
   END IF;
-  RAISE NOTICE 'OK 1: anon nao le diagnosticos';
+  RAISE NOTICE 'OK 1: anon nao le diagnosticos (RLS devolveu 0)';
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE NOTICE 'OK 1: anon nao le diagnosticos (barrado no GRANT)';
 END $$;
 
 -- ---------------------------------------------------------------------------
 -- 2. Visitante anônimo PODE inserir diagnóstico
+--    (é disso que o formulário público depende)
 -- ---------------------------------------------------------------------------
 DO $$
 BEGIN
@@ -50,25 +57,30 @@ BEGIN
   );
   RAISE NOTICE 'OK 2: anon consegue inserir diagnostico';
 EXCEPTION WHEN OTHERS THEN
-  RAISE EXCEPTION 'FALHA 2: anon nao conseguiu inserir (%)', SQLERRM;
+  RAISE EXCEPTION 'FALHA 2: anon nao conseguiu inserir (% - %)', SQLSTATE, SQLERRM;
 END $$;
 
 -- ---------------------------------------------------------------------------
--- 3. Visitante anônimo NÃO pode ler admins nem histórico
+-- 3. Visitante anônimo NÃO lê admins nem histórico
 -- ---------------------------------------------------------------------------
 DO $$
 DECLARE n INT;
 BEGIN
   SELECT count(*) INTO n FROM admins;
   IF n <> 0 THEN RAISE EXCEPTION 'FALHA 3a: anon leu % admin(s)', n; END IF;
+  RAISE NOTICE 'OK 3a: anon nao le admins (RLS devolveu 0)';
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE NOTICE 'OK 3a: anon nao le admins (barrado no GRANT)';
+END $$;
 
+DO $$
+DECLARE n INT;
+BEGIN
   SELECT count(*) INTO n FROM historico_comercial;
   IF n <> 0 THEN RAISE EXCEPTION 'FALHA 3b: anon leu % historico(s)', n; END IF;
-
-  RAISE NOTICE 'OK 3: anon nao le admins nem historico';
+  RAISE NOTICE 'OK 3b: anon nao le historico (RLS devolveu 0)';
 EXCEPTION WHEN insufficient_privilege THEN
-  -- Sem GRANT de SELECT o erro é de privilégio, o que também é aprovação.
-  RAISE NOTICE 'OK 3: anon barrado por privilegio (ainda melhor que RLS)';
+  RAISE NOTICE 'OK 3b: anon nao le historico (barrado no GRANT)';
 END $$;
 
 RESET ROLE;
@@ -85,9 +97,11 @@ DECLARE n INT;
 BEGIN
   SELECT count(*) INTO n FROM diagnosticos;
   IF n <> 0 THEN
-    RAISE EXCEPTION 'FALHA 4: usuario sem cadastro em admins leu % linha(s)', n;
+    RAISE EXCEPTION 'FALHA 4: usuario fora de admins leu % linha(s)', n;
   END IF;
   RAISE NOTICE 'OK 4: autenticado fora de admins nao le diagnosticos';
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE NOTICE 'OK 4: autenticado fora de admins barrado no GRANT';
 END $$;
 
 -- ---------------------------------------------------------------------------
@@ -105,6 +119,8 @@ BEGIN
     RAISE EXCEPTION 'FALHA 5: nao-admin atualizou % linha(s)', n;
   END IF;
   RAISE NOTICE 'OK 5: autenticado fora de admins nao atualiza';
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE NOTICE 'OK 5: update barrado no GRANT';
 END $$;
 
 RESET ROLE;
@@ -122,7 +138,7 @@ BEGIN
   SELECT id INTO admin_id FROM admins LIMIT 1;
 
   IF admin_id IS NULL THEN
-    RAISE NOTICE 'PULADO 6: nenhum admin cadastrado ainda (rode criar-admin.sql)';
+    RAISE NOTICE 'PULADO 6: nenhum admin cadastrado (rode criar-admin.sql antes)';
     RETURN;
   END IF;
 
@@ -159,6 +175,24 @@ BEGIN
   RAISE EXCEPTION 'FALHA 7: aceitou diagnostico com menos de 15 respostas';
 EXCEPTION WHEN check_violation THEN
   RAISE NOTICE 'OK 7: diagnostico incompleto foi rejeitado';
+END $$;
+
+-- ---------------------------------------------------------------------------
+-- 8. Fora da faixa 1..10 é rejeitado
+-- ---------------------------------------------------------------------------
+DO $$
+BEGIN
+  INSERT INTO diagnosticos (
+    nome, email, whatsapp, respostas_json, nota_geral, gargalo_principal
+  ) VALUES (
+    'Fora da escala', 'y@example.com', '11666666666',
+    '{"q1":99,"q2":5,"q3":5,"q4":5,"q5":5,"q6":5,"q7":5,"q8":5,
+      "q9":5,"q10":5,"q11":5,"q12":5,"q13":5,"q14":5,"q15":5}'::jsonb,
+    5.0, 'Aquisição'
+  );
+  RAISE EXCEPTION 'FALHA 8: aceitou resposta fora da faixa 1..10';
+EXCEPTION WHEN check_violation THEN
+  RAISE NOTICE 'OK 8: resposta fora da faixa foi rejeitada';
 END $$;
 
 DO $$ BEGIN
