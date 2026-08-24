@@ -71,6 +71,28 @@ npm test
 npm run build
 ```
 
+### Verificar o SQL sem tocar em produção
+
+`sql/harness-local.sql` reproduz as primitivas do Supabase (schema `auth`,
+`auth.uid()`, papéis `anon`/`authenticated`) num Postgres comum. Com ele dá
+para rodar o schema e a verificação de RLS numa base descartável:
+
+```bash
+createdb sx_teste
+psql -d sx_teste -f sql/harness-local.sql
+psql -d sx_teste -f sql/schema.sql
+psql -d sx_teste -f sql/verificar-rls.sql
+```
+
+A nota e o gargalo são calculados em dois lugares: em `lib/diagnosis.ts`, para
+mostrar ao lead na hora, e no trigger `aplicar_diagnostico`, que é o valor
+gravado. `npm run test:sql` roda 403 casos pelos dois caminhos e compara — é o
+que impede as duas implementações de divergirem em silêncio.
+
+```bash
+PGDATABASE=sx_teste npm run test:sql
+```
+
 ---
 
 ## 6. Deploy no EasyPanel
