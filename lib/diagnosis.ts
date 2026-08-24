@@ -44,52 +44,6 @@ export function identificarGargalo(scores: PillarScores): string {
   return gargalo.nome
 }
 
-export function gerarRecomendacoes(scores: PillarScores, gargalo: string): string[] {
-  const recomendacoes: string[] = []
-
-  if (scores.aquisicao < 5) {
-    recomendacoes.push('Implementar estratégia de marketing digital estruturada')
-    recomendacoes.push('Aumentar presença em redes sociais e Google Meu Negócio')
-  }
-
-  if (scores.triagem < 5) {
-    recomendacoes.push('Criar fluxo de qualificação de leads automatizado')
-    recomendacoes.push('Estabelecer critérios claros de aceite de clientes')
-  }
-
-  if (scores.conversao < 5) {
-    recomendacoes.push('Otimizar processo de apresentação de propostas')
-    recomendacoes.push('Treinar equipe em técnicas de fechamento')
-  }
-
-  if (scores.crm < 5) {
-    recomendacoes.push('Implementar CRM especializado para advocacia')
-    recomendacoes.push('Automatizar follow-ups e comunicação com clientes')
-  }
-
-  if (scores.gestao < 5) {
-    recomendacoes.push('Estruturar processos administrativos')
-    recomendacoes.push('Implementar gestão de tempo e ressourcing')
-  }
-
-  return recomendacoes.slice(0, 3)
-}
-
-export function calcularCAC(
-  investimentoMensal: number,
-  clientesAquisitos: number
-): number {
-  if (clientesAquisitos === 0) return investimentoMensal
-  return investimentoMensal / clientesAquisitos
-}
-
-export function calcularCACIdeal(
-  ticket: number,
-  marginemLucro: number = 0.3
-): number {
-  return ticket * marginemLucro / 3
-}
-
 export function gerarMensagemWhatsapp(
   nome: string,
   gargalo: string,

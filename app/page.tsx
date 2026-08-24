@@ -80,17 +80,15 @@ export default function DiagnosisPage() {
 
     setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('diagnosticos')
-        .insert([
-          {
-            ...contact,
-            respostas_json: respostasCompletas,
-            nota_geral: scores.media,
-            gargalo_principal: gargalo,
-          },
-        ])
-        .select()
+      // Sem .select(): o visitante anônimo não tem permissão de leitura (RLS)
+      const { error } = await supabase.from('diagnosticos').insert([
+        {
+          ...contact,
+          respostas_json: respostasCompletas,
+          nota_geral: scores.media,
+          gargalo_principal: gargalo,
+        },
+      ])
 
       if (error) {
         console.error('Erro ao salvar diagnóstico:', error)

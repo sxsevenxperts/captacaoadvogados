@@ -30,13 +30,13 @@ export default function LoginPage() {
       }
 
       // Verificar se é admin
-      const { data: admin, error: adminError } = await supabase
+      const { data: admin } = await supabase
         .from('admins')
-        .select('*')
+        .select('id')
         .eq('id', data.user!.id)
-        .single()
+        .maybeSingle()
 
-      if (adminError || !admin) {
+      if (!admin) {
         await supabase.auth.signOut()
         setError('Você não tem acesso ao painel administrativo')
         setLoading(false)

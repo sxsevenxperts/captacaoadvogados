@@ -10,41 +10,52 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [user, setUser] = useState<any>(null)
+  const pathname = usePathname()
+  const isLoginPage = pathname === '/admin/login'
+
+  const [authorized, setAuthorized] = useState(false)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-  const pathname = usePathname()
 
   useEffect(() => {
+    // A página de login é pública — não checar sessão nela (evita loop de redirect)
+    if (isLoginPage) {
+      setLoading(false)
+      return
+    }
+
     const checkAuth = async () => {
       const {
-        data: { user: authUser },
+        data: { user },
       } = await supabase.auth.getUser()
 
-      if (!authUser) {
-        router.push('/admin/login')
+      if (!user) {
+        router.replace('/admin/login')
         return
       }
 
-      // Verificar se é admin
       const { data: admin } = await supabase
         .from('admins')
-        .select('*')
-        .eq('id', authUser.id)
-        .single()
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle()
 
       if (!admin) {
         await supabase.auth.signOut()
-        router.push('/admin/login')
+        router.replace('/admin/login')
         return
       }
 
-      setUser(authUser)
+      setAuthorized(true)
       setLoading(false)
     }
 
     checkAuth()
-  }, [router])
+  }, [router, isLoginPage])
+
+  if (isLoginPage) {
+    return <>{children}</>
+  }
 
   if (loading) {
     return (
@@ -54,14 +65,8 @@ export default function AdminLayout({
     )
   }
 
-  if (!user) {
+  if (!authorized) {
     return null
-  }
-
-  const isLoginPage = pathname === '/admin/login'
-
-  if (isLoginPage) {
-    return <>{children}</>
   }
 
   return (
@@ -80,7 +85,7 @@ export default function AdminLayout({
           className={styles.logout}
           onClick={async () => {
             await supabase.auth.signOut()
-            router.push('/admin/login')
+            router.replace('/admin/login')
           }}
         >
           Sair

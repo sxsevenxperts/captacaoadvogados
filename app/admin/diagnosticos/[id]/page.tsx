@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { calcularScores, identificarGargalo } from '@/lib/diagnosis'
-import type { Diagnostico, DiagnosticoRespostas } from '@/lib/types'
+import { calcularScores } from '@/lib/diagnosis'
+import type { Diagnostico, DiagnosticoRespostas, PillarScores } from '@/lib/types'
 import styles from './detail.module.css'
 
 const statusOptions = [
@@ -27,7 +27,7 @@ export default function DiagnosticoDetail() {
   const [status, setStatus] = useState('')
   const [observacoes, setObservacoes] = useState('')
   const [proximaAcao, setProximaAcao] = useState('')
-  const [scores, setScores] = useState<any>(null)
+  const [scores, setScores] = useState<PillarScores | null>(null)
 
   useEffect(() => {
     loadDiagnostico()
@@ -40,9 +40,9 @@ export default function DiagnosticoDetail() {
         .from('diagnosticos')
         .select('*')
         .eq('id', id)
-        .single()
+        .maybeSingle()
 
-      if (error) {
+      if (error || !data) {
         console.error('Erro:', error)
         router.push('/admin/diagnosticos')
         return
@@ -85,17 +85,20 @@ export default function DiagnosticoDetail() {
           data: { user },
         } = await supabase.auth.getUser()
 
-        await supabase.from('historico_comercial').insert([
-          {
-            diagnostico_id: id,
-            status_anterior: diagnostico.status_comercial,
-            status_novo: status,
-            observacao: observacoes,
-            criado_por: user?.id,
-          },
-        ])
+        if (user) {
+          await supabase.from('historico_comercial').insert([
+            {
+              diagnostico_id: id,
+              status_anterior: diagnostico.status_comercial,
+              status_novo: status,
+              observacao: observacoes,
+              criado_por: user.id,
+            },
+          ])
+        }
       }
 
+      setDiagnostico({ ...diagnostico!, status_comercial: status as Diagnostico['status_comercial'], observacoes, proxima_acao: proximaAcao })
       alert('Salvo com sucesso!')
       setSaving(false)
     } catch (err) {

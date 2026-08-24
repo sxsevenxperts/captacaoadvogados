@@ -1,142 +1,106 @@
-# Setup Rápido - Seven Xperts Diagnóstico
+# Seven Xperts — Diagnóstico de Captação
 
-## 1️⃣ Clonar e Instalar
+MVP: formulário público de diagnóstico + painel administrativo.
 
-```bash
-npm install
+**Rotas**
+- `/` — formulário público (13 perguntas)
+- `/admin/login` — login
+- `/admin/diagnosticos` — lista com busca/filtro/ordenação
+- `/admin/diagnosticos/:id` — detalhe, status comercial, observações
+
+---
+
+## 1. Regenerar as chaves do Supabase
+
+As chaves compartilhadas anteriormente estão comprometidas.
+
+Supabase Dashboard → Settings → API → regenerar `anon` e `service_role`.
+
+---
+
+## 2. Rodar o SQL
+
+Supabase Dashboard → SQL Editor → cole todo o conteúdo de `sql/schema.sql` → Run.
+
+O script é idempotente: pode rodar de novo se der erro no meio.
+
+---
+
+## 3. Variáveis de ambiente
+
+Crie `.env.local` na raiz:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=SUA_CHAVE_ANON_NOVA
 ```
 
-## 2️⃣ Criar Projeto Supabase
+Encontre em Settings → API. **Nunca** coloque a `service_role` aqui — este é um app client-side e a chave iria para o navegador.
 
-1. Vá para [supabase.com](https://supabase.com)
-2. Crie uma organização (se não tiver)
-3. Crie novo projeto
-4. Salve a senha do banco (vai precisar depois)
-5. Aguarde ~2 minutos (inicialização)
+---
 
-## 3️⃣ Executar SQL
+## 4. Criar o primeiro administrador
 
-1. No Supabase Dashboard, vá para **SQL Editor**
-2. Crie uma nova query
-3. Copie TUDO do arquivo `sql/schema.sql`
-4. Execute ▶️
-5. Aguarde conclusão (deve ser rápido)
+**a)** Authentication → Users → **Add user**
+- Email e senha
+- Marque *Auto Confirm User* (senão o login falha por email não confirmado)
+- Copie o **UUID** do usuário criado
 
-## 4️⃣ Configurar Variáveis
-
-1. Settings → API
-2. Copie:
-   - `Project URL` → Cole como `NEXT_PUBLIC_SUPABASE_URL`
-   - `anon key` → Cole como `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. Crie arquivo `.env.local`:
-
-```
-NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anonima
-```
-
-## 5️⃣ Criar Admin
-
-1. Authentication → Users
-2. "Add user" button
-3. Email: seu-email@example.com
-4. Password: escolha uma
-5. Copie o UUID do usuário criado
-
-6. SQL Editor → New Query → Execute:
+**b)** SQL Editor:
 
 ```sql
 INSERT INTO admins (id, email, nome, role)
-VALUES (
-  'uuid-do-usuario-aqui',
-  'seu-email@example.com',
-  'Seu Nome',
-  'admin'
-);
+VALUES ('COLE-O-UUID-AQUI', 'seu@email.com', 'Seu Nome', 'admin');
 ```
 
-## 6️⃣ Rodar Localmente
+O `id` precisa ser exatamente o UUID do Auth — é assim que o RLS reconhece o admin.
+
+---
+
+## 5. Rodar local
 
 ```bash
+npm install
 npm run dev
 ```
 
-Acesse:
-- 🌍 Diagnóstico público: http://localhost:3000
-- 🔐 Admin: http://localhost:3000/admin/login
-
-## 7️⃣ Testar Fluxo Completo
-
-1. **Form público**
-   - Preencha nome, email, WhatsApp
-   - Responda 13 perguntas
-   - Veja resultado com score e gargalo
-
-2. **Admin Dashboard**
-   - Login: seu-email@example.com + senha
-   - Veja diagnóstico na lista
-   - Clique em "Ver Detalhes"
-   - Mude status, adicione observações
-   - Salve (registra histórico)
-
-## 🚀 Deploy (Vercel)
-
-```bash
-# 1. Fazer commit
-git add .
-git commit -m "Initial setup"
-git push
-
-# 2. No Vercel.com
-# - Import projeto do GitHub
-# - Environment Variables:
-#   NEXT_PUBLIC_SUPABASE_URL=...
-#   NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-# - Deploy
-```
+- http://localhost:3000 — formulário
+- http://localhost:3000/admin/login — painel
 
 ---
 
-## 📋 Checklist Final
+## 6. Deploy no EasyPanel
 
-- [ ] Projeto Supabase criado
-- [ ] SQL executado (3 tabelas + RLS)
-- [ ] `.env.local` preenchido
-- [ ] Admin criado na tabela `admins`
-- [ ] `npm run dev` funcionando
-- [ ] Form funciona e salva no Supabase
-- [ ] Admin consegue fazer login
-- [ ] Admin consegue ver diagnósticos
-- [ ] Admin consegue atualizar status e observações
-- [ ] Build sem erros: `npm run build`
+Build command: `npm install && npm run build`
+Start command: `npm run start`
+Porta: `3000`
+
+Variáveis de ambiente no painel do EasyPanel (as mesmas do `.env.local`).
+
+Elas são lidas **em build time** — se mudar uma variável, precisa rebuildar, não só reiniciar.
 
 ---
 
-## ❓ Troubleshooting
+## Modelo de segurança
 
-### "Erro ao carregar diagnósticos"
-- Verifique RLS: SQL Editor → Tabela `diagnosticos` → Policies
-- Confirme que admin está na tabela `admins`
+A proteção real dos dados é o **RLS no Postgres**, não a interface:
 
-### "Não consigo fazer login"
-- Verifique email no Auth (deve estar confirmado)
-- Verifique que o UUID está correto na tabela `admins`
+| Quem | diagnosticos | admins | historico |
+|---|---|---|---|
+| Visitante anônimo | INSERT apenas | nada | nada |
+| Autenticado fora de `admins` | nada | nada | nada |
+| Admin (linha em `admins`) | SELECT + UPDATE | própria linha | SELECT + INSERT |
 
-### "Variáveis de ambiente não carregam"
-- Reinicie servidor: Ctrl+C e `npm run dev` novamente
-- Verifique `.env.local` está na raiz do projeto
-
-### "Build falha"
-- Delete `node_modules` e `.next`: `rm -rf node_modules .next`
-- Reinstale: `npm install && npm run build`
+Mesmo que alguém abra `/admin/diagnosticos` no navegador, o banco não devolve nenhuma linha sem uma linha correspondente em `admins`.
 
 ---
 
-## 📞 Documentação Completa
+## Troubleshooting
 
-Veja `AUDIT.md` para:
-- Auditoria completa de segurança
-- SQL detalhado
-- Instruções de produção
-- Roadmap Phase 2
-
+| Erro | Causa |
+|---|---|
+| `function auth.user_id() does not exist` | SQL antigo. Use o `sql/schema.sql` atual (usa `auth.uid()`). |
+| `infinite recursion detected in policy` | Política em `admins` consultando `admins`. Resolvido pela função `is_admin()` com SECURITY DEFINER. |
+| Login diz "sem acesso" | Falta a linha em `admins`, ou o `id` não bate com o UUID do Auth. |
+| Login falha silenciosamente | Usuário não confirmado no Auth. |
+| Lista vazia com admin logado | Confira `SELECT * FROM admins WHERE id = auth.uid()`. |
