@@ -141,6 +141,8 @@ function brl(v: number): string {
 export default function LandingPage() {
   const supabase = useMemo(() => criarClienteNavegador(), [])
 
+  const [fotoOk, setFotoOk] = useState(true)
+
   /* ----------------------------------------------------------------- nav -- */
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
@@ -1009,8 +1011,19 @@ export default function LandingPage() {
           <div className="bio-shell reveal">
             <div className="bio-photo">
               <div className="bio-frame">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/sergio-ponte.jpg" alt="Sérgio Ponte, fundador da Seven Xperts" loading="lazy" />
+                {/* Enquanto a foto não estiver em public/, mostra as iniciais
+                    em vez do ícone de imagem quebrada. */}
+                {fotoOk ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src="/sergio-ponte.jpg"
+                    alt="Sérgio Ponte, fundador da Seven Xperts"
+                    loading="lazy"
+                    onError={() => setFotoOk(false)}
+                  />
+                ) : (
+                  <span className="bio-iniciais" aria-hidden="true">SP</span>
+                )}
               </div>
               <span className="bio-badge">Fundador · Seven Xperts</span>
             </div>
