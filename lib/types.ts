@@ -15,6 +15,9 @@ export type DiagnosticoRespostas = {
   q11: number; q12: number; q13: number; q14: number; q15: number
 }
 
+/** Índice da opção marcada em cada pergunta. Ver sql/adiciona-escolhas.sql. */
+export type DiagnosticoEscolhas = DiagnosticoRespostas
+
 export type Diagnostico = {
   id: string
   nome: string
@@ -25,6 +28,8 @@ export type Diagnostico = {
   cidade: string | null
   area: string | null
   respostas_json: DiagnosticoRespostas
+  /** Nulo em diagnósticos anteriores à coluna. */
+  escolhas_json: DiagnosticoEscolhas | null
   nota_geral: number
   gargalo_principal: string
   cac_investimento_mensal: number | null

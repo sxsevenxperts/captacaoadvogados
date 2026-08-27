@@ -3,85 +3,102 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  padding: 1.4rem;
+  background:
+    radial-gradient(70% 55% at 18% 8%, rgba(31, 216, 196, 0.14), transparent 62%),
+    radial-gradient(60% 50% at 88% 92%, rgba(198, 255, 58, 0.09), transparent 60%),
+    var(--ink);
 }
 
 .card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  padding: 40px;
-  max-width: 400px;
+  background: linear-gradient(145deg, rgba(6, 48, 44, 0.28), rgba(5, 7, 10, 0.6));
+  border: 1px solid var(--line-soft);
+  border-radius: 20px;
+  padding: clamp(1.8rem, 5vw, 2.6rem);
+  max-width: 380px;
   width: 100%;
-  text-align: center;
 }
 
 .card h1 {
-  color: #667eea;
-  margin-bottom: 5px;
-  font-size: 24px;
+  font-family: var(--f-display);
+  font-size: 1.7rem;
+  font-weight: 430;
+  color: var(--mist);
+  margin-bottom: 0.3rem;
 }
 
 .card p {
-  color: #999;
-  margin-bottom: 30px;
-  font-size: 14px;
+  font-size: 0.66rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--turq);
+  font-weight: 600;
+  margin-bottom: 1.8rem;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 0.75rem;
 }
 
 .form input[type="email"],
 .form input[type="password"] {
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border-color 0.2s;
+  padding: 0.8rem 0.9rem;
+  background: rgba(5, 7, 10, 0.55);
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: var(--mist);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.form input::placeholder {
+  color: var(--sage);
 }
 
 .form input[type="email"]:focus,
 .form input[type="password"]:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--line-turq);
+  background: rgba(31, 216, 196, 0.05);
 }
 
 .form input:disabled {
-  background: #f5f5f5;
-  color: #999;
+  opacity: 0.5;
 }
 
 .form button {
-  padding: 12px;
-  background: #667eea;
-  color: white;
+  margin-top: 0.4rem;
+  padding: 0.8rem;
+  background: var(--grad-pill);
+  /* Tinta escura sobre limão: contraste ~16:1, o mesmo critério dos
+     botões do site. Texto claro aqui ficaria ilegível. */
+  color: #06110a;
   border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
+  border-radius: 100px;
+  font-size: 0.9rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  transition: transform 0.25s ease, box-shadow 0.3s ease;
+  box-shadow: 0 6px 24px -10px rgba(155, 232, 0, 0.6);
 }
 
 .form button:hover:not(:disabled) {
-  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -10px rgba(198, 255, 58, 0.7);
 }
 
 .form button:disabled {
-  opacity: 0.6;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .error {
-  background: #f8d7da;
-  border: 1px solid #f5c6cb;
-  color: #721c24;
-  padding: 12px;
-  border-radius: 6px;
-  font-size: 14px;
+  background: var(--alerta-fundo);
+  border: 1px solid var(--alerta-linha);
+  color: var(--alerta);
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
 }

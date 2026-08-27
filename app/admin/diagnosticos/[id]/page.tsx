@@ -3,7 +3,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { criarClienteNavegador } from '@/lib/supabase/client'
-import { PERGUNTAS, calcularScores, identificarGargalo } from '@/lib/diagnosis'
+import {
+  PERGUNTAS,
+  calcularScores,
+  identificarGargalo,
+  prioridadesDoPlano,
+  opcaoRespondida,
+  escalaAmbigua,
+  PLANO_ACAO,
+} from '@/lib/diagnosis'
 import { calcularCac } from '@/lib/cac'
 import { STATUS_COMERCIAL } from '@/lib/types'
 import type { Diagnostico, HistoricoComercial, StatusComercial } from '@/lib/types'
@@ -101,6 +109,9 @@ export default function DetalheDiagnostico() {
 
   const scores = calcularScores(diagnostico.respostas_json)
   const gargaloRecalculado = identificarGargalo(scores)
+  // Derivado na leitura, nunca gravado: se a metodologia mudar, os leads
+  // antigos passam a refletir a versão atual em vez de um texto congelado.
+  const prioridades = prioridadesDoPlano(scores)
   const cac = calcularCac({
     investimentoMensal: diagnostico.cac_investimento_mensal ?? undefined,
     novosClientes: diagnostico.cac_novos_clientes ?? undefined,
@@ -208,17 +219,54 @@ export default function DetalheDiagnostico() {
       )}
 
       <section className={styles.card}>
+        <h2>Plano de ação</h2>
+        <div className={styles.plano}>
+          {prioridades.map((pilar, i) => (
+            <div className={styles.prioridade} key={pilar}>
+              <span className={styles.prioridadeTag}>Prioridade {i + 1}</span>
+              <div className={styles.prioridadeCorpo}>
+                <strong>{PLANO_ACAO[pilar].titulo}</strong>
+                <ul>
+                  {PLANO_ACAO[pilar].itens.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className={styles.planoNota}>
+          Ordem dos três pilares mais fracos deste diagnóstico. O visitante não
+          vê este plano no site: ele é apresentado na reunião.
+        </p>
+      </section>
+
+      <section className={styles.card}>
         <h2>Respostas ({PERGUNTAS.length})</h2>
         <ol className={styles.respostas}>
-          {PERGUNTAS.map((p) => (
-            <li key={p.id}>
-              <span className={styles.respPilar}>{p.pilar}</span>
-              <span className={styles.respTexto}>{p.texto}</span>
-              <span className={styles.respValor}>
-                {diagnostico.respostas_json[p.id]}/10
-              </span>
-            </li>
-          ))}
+          {PERGUNTAS.map((p) => {
+            const escala = diagnostico.respostas_json[p.id]
+            const indice = diagnostico.escolhas_json?.[p.id]
+            const escolha = opcaoRespondida(p, escala, indice)
+            // Diagnóstico antigo, sem escolha gravada, numa pergunta cujas
+            // opções empatam: a opção exibida é palpite. Melhor avisar.
+            const incerta = indice == null && escalaAmbigua(p, escala)
+            return (
+              <li key={p.id}>
+                <span className={styles.respPilar}>{p.pilar}</span>
+                <span className={styles.respTexto}>
+                  {p.texto}
+                  <strong className={styles.respOpcao}>
+                    {escolha ?? 'Sem resposta correspondente'}
+                    {incerta && (
+                      <em className={styles.incerta}> — opção não registrada, valor empatado</em>
+                    )}
+                  </strong>
+                </span>
+                <span className={styles.respValor}>{escala}/10</span>
+              </li>
+            )
+          })}
         </ol>
       </section>
 

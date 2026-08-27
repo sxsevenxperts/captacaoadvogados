@@ -1,0 +1,83 @@
+/* Tokens do painel administrativo.
+ *
+ * São os mesmos valores de `app/landing.css`, repetidos aqui de propósito:
+ * lá eles vivem dentro de `.sx-root`, que não envolve as rotas /admin. Como
+ * este arquivo é importado pelo layout de /admin, vale para o painel inteiro
+ * — inclusive /admin/login, que devolve `children` antes da moldura.
+ *
+ * Ao mudar a paleta do site, mudar aqui também. São duas listas, uma verdade.
+ */
+.admin-scope,
+body:has(.admin-scope) {
+  --ink: #05070a;
+  --void: #080b0e;
+  --panel: #0c1114;
+  --panel-2: #0f1519;
+  --deep: #06302c;
+  --turq: #1fd8c4;
+  --turq-soft: #7ff0e2;
+  --lime: #c6ff3a;
+  --lime-deep: #9be800;
+  --mist: #eaf3ec;
+  --sage: #8ca096;
+
+  --line: rgba(198, 255, 58, 0.14);
+  --line-turq: rgba(31, 216, 196, 0.22);
+  --line-soft: rgba(234, 243, 236, 0.08);
+
+  --grad-text: linear-gradient(100deg, #1fd8c4 0%, #9be800 55%, #c6ff3a 100%);
+  --grad-pill: linear-gradient(120deg, #9be800 0%, #c6ff3a 100%);
+  --grad-turq: linear-gradient(120deg, #1fd8c4 0%, #7ff0e2 100%);
+
+  --f-display: var(--font-display), 'Fraunces', Georgia, serif;
+  --f-ui: var(--font-ui), 'Space Grotesk', system-ui, sans-serif;
+
+  --alerta: #ffb4a8;
+  --alerta-fundo: rgba(255, 120, 100, 0.09);
+  --alerta-linha: rgba(255, 120, 100, 0.3);
+}
+
+/* O globals.css pinta o body de claro. Sem isto, o overscroll e as áreas
+   fora do container revelam a faixa clara por trás do painel escuro. */
+body:has(.admin-scope) {
+  background: var(--ink);
+  color: var(--mist);
+}
+
+.admin-scope {
+  font-family: var(--f-ui);
+  font-weight: 350;
+  letter-spacing: 0.005em;
+  color: var(--mist);
+  background: var(--ink);
+  min-height: 100vh;
+}
+
+.admin-scope h1,
+.admin-scope h2,
+.admin-scope h3 {
+  font-family: var(--f-display);
+  font-weight: 430;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.admin-scope a { color: inherit; text-decoration: none; }
+.admin-scope button { font-family: inherit; cursor: pointer; }
+.admin-scope input,
+.admin-scope select,
+.admin-scope textarea { font-family: inherit; }
+.admin-scope :focus-visible {
+  outline: 2px solid var(--turq);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Rótulo de seção, igual ao `.eyebrow` do site. */
+.admin-scope .sobre {
+  font-size: 0.66rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--turq);
+  font-weight: 600;
+}

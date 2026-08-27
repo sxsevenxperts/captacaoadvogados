@@ -319,9 +319,7 @@ export default function LandingPage() {
         return
       }
       if (!local && supabase) {
-        // Sem .select(): o visitante anônimo tem INSERT, não SELECT.
-        // nota_geral e gargalo_principal são preenchidos pelo trigger.
-        const { error } = await supabase.from('diagnosticos').insert({
+        const registro = {
           nome: contato.nome.trim(),
           email: contato.email.trim(),
           whatsapp: contato.whatsapp.trim(),
@@ -342,7 +340,28 @@ export default function LandingPage() {
           cac_margem: cacTocado
             ? Math.min(1, Math.max(0, (parseFloat(cac.margem) || 0) / 100))
             : null,
-        })
+        }
+
+        // Qual opção foi marcada. Sem isto, perguntas com opções de mesmo peso
+        // (a q15 tem nove valendo 70) ficam indistinguíveis no painel.
+        const escolhas = Object.fromEntries(
+          PERGUNTAS.map((p, i) => [p.id, respostas[i] ?? 0])
+        )
+
+        // Sem .select(): o visitante anônimo tem INSERT, não SELECT.
+        // nota_geral e gargalo_principal são preenchidos pelo trigger.
+        let { error } = await supabase
+          .from('diagnosticos')
+          .insert({ ...registro, escolhas_json: escolhas })
+
+        // A coluna escolhas_json depende de uma migração. Enquanto ela não
+        // rodar, grava sem a escolha em vez de recusar o lead: perder o
+        // contato é pior do que perder qual opção ele marcou.
+        if (error && (error.code === 'PGRST204' || error.code === '42703')) {
+          console.warn('[diagnostico] escolhas_json ausente; aplique sql/adiciona-escolhas.sql')
+          ;({ error } = await supabase.from('diagnosticos').insert(registro))
+        }
+
         if (error) {
           // Sem isto, uma constraint ou trigger ausente vira só "tente
           // novamente" e não há como descobrir a causa a partir do navegador.

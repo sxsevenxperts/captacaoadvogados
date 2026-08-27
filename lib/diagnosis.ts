@@ -323,6 +323,55 @@ export function identificarGargalo(scores: PillarScores): string {
   ).nome
 }
 
+/**
+ * Os três pilares mais fracos, do pior para o menos pior. É a ordem do plano
+ * de ação: o gargalo principal é sempre o primeiro item.
+ *
+ * Empate resolve pela ordem do funil (Aquisição → Triagem → Conversão → CRM →
+ * Gestão), a mesma regra de `identificarGargalo`: corrigir uma etapa adiante
+ * sem resolver a anterior só empurra o problema.
+ */
+export function prioridadesDoPlano(scores: PillarScores): string[] {
+  const pilares: [string, number][] = [
+    ['Aquisição', scores.aquisicao],
+    ['Triagem', scores.triagem],
+    ['Conversão', scores.conversao],
+    ['CRM', scores.crm],
+    ['Gestão', scores.gestao],
+  ]
+
+  return pilares
+    .map(([nome, valor], ordem) => ({ nome, valor, ordem }))
+    .sort((a, b) => a.valor - b.valor || a.ordem - b.ordem)
+    .slice(0, 3)
+    .map((p) => p.nome)
+}
+
+/**
+ * Texto da opção marcada pelo visitante.
+ *
+ * Prefere o índice gravado em `escolhas_json`, que é exato. Só quando ele não
+ * existe — diagnósticos anteriores a essa coluna — cai na busca pela escala,
+ * que é ambígua: cinco perguntas têm opções de mesmo peso, e a q15 tem nove.
+ * Nesses casos devolve a primeira correspondente, que pode não ser a marcada.
+ */
+export function opcaoRespondida(
+  pergunta: Pergunta,
+  escala: number,
+  indice?: number | null,
+): string | null {
+  if (indice != null && pergunta.opcoes[indice]) {
+    return pergunta.opcoes[indice].texto
+  }
+  const op = pergunta.opcoes.find((o) => valorParaEscala(o.valor) === escala)
+  return op ? op.texto : null
+}
+
+/** Verdadeiro quando a escala sozinha não identifica a opção marcada. */
+export function escalaAmbigua(pergunta: Pergunta, escala: number): boolean {
+  return pergunta.opcoes.filter((o) => valorParaEscala(o.valor) === escala).length > 1
+}
+
 /** Rótulo longo de cada pilar, para a tela de resultado. */
 export const ROTULO_PILAR: Record<string, string> = {
   Aquisição: 'Aquisição & Posicionamento',
