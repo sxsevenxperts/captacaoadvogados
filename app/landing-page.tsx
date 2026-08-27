@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { criarClienteNavegador } from '@/lib/supabase/client'
+import { criarClientePublico } from '@/lib/supabase/client'
 import {
   PERGUNTAS,
   TOTAL_PERGUNTAS,
@@ -139,12 +139,12 @@ function brl(v: number): string {
 }
 
 export default function LandingPage() {
-  // createBrowserClient lanca se as NEXT_PUBLIC_* faltarem no build. Sem esta
-  // guarda, um deploy sem as variaveis derruba a landing inteira em vez de
-  // apenas impedir o envio do diagnostico.
+  // createClient lanca se as NEXT_PUBLIC_* faltarem no build. Sem esta guarda,
+  // um deploy sem as variaveis derruba a landing inteira em vez de apenas
+  // impedir o envio do diagnostico.
   const supabase = useMemo(() => {
     try {
-      return criarClienteNavegador()
+      return criarClientePublico()
     } catch (e) {
       console.error('[diagnostico] Supabase indisponivel:', e)
       return null
