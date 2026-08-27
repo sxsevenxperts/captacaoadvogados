@@ -330,6 +330,11 @@ export default function LandingPage() {
           cidade: contato.cidade.trim() || null,
           area: contato.areas.join(', ') || null,
           respostas_json: brutas,
+          // Qual opção foi marcada. Sem isto, perguntas com opções de mesmo
+          // peso (q15 tem nove valendo 70) ficam indistinguíveis no painel.
+          escolhas_json: Object.fromEntries(
+            PERGUNTAS.map((p, i) => [p.id, respostas[i] ?? 0])
+          ),
           // Só grava o CAC se o visitante realmente calculou o dele.
           // A constraint cac_valores_positivos exige margem entre 0 e 1.
           cac_investimento_mensal: cacTocado

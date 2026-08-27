@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { criarClienteNavegador } from '@/lib/supabase/client'
 import styles from './layout.module.css'
+import './admin.css'
 
 /**
  * Este layout é apenas a moldura visual. Quem barra o acesso é o
@@ -20,12 +21,14 @@ export default function AdminLayout({
   const router = useRouter()
   const supabase = useMemo(() => criarClienteNavegador(), [])
 
+  // O login não usa a moldura, mas precisa do escopo: é ele que carrega os
+  // tokens de cor e as fontes do painel.
   if (pathname === '/admin/login') {
-    return <>{children}</>
+    return <div className="admin-scope">{children}</div>
   }
 
   return (
-    <div className={styles.layout}>
+    <div className={`admin-scope ${styles.layout}`}>
       <nav className={styles.navbar}>
         <div className={styles.logo}>Seven Xperts</div>
         <div className={styles.menu}>

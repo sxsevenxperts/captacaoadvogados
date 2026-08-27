@@ -5,6 +5,11 @@ import {
   TOTAL_PERGUNTAS,
   calcularScores,
   identificarGargalo,
+  prioridadesDoPlano,
+  opcaoRespondida,
+  escalaAmbigua,
+  valorParaEscala,
+  PLANO_ACAO,
 } from '../lib/diagnosis'
 import type { DiagnosticoRespostas } from '../lib/types'
 
@@ -105,4 +110,67 @@ test('gargalo e determinístico', () => {
   const s = calcularScores(respostas({ q7: 2, q8: 2, q9: 2 }))
   assert.equal(identificarGargalo(s), identificarGargalo(s))
   assert.equal(identificarGargalo(s), 'Conversão')
+})
+
+/* ------------------------------------------------------- plano de ação -- */
+
+test('o plano tem 3 prioridades e comeca pelo gargalo', () => {
+  const r = respostas({ q10: 1, q11: 2, q1: 3, q2: 3, q3: 3 })
+  const scores = calcularScores(r)
+  const plano = prioridadesDoPlano(scores)
+
+  assert.equal(plano.length, 3)
+  assert.equal(plano[0], identificarGargalo(scores))
+})
+
+test('as prioridades saem do mais fraco para o menos fraco', () => {
+  const scores = calcularScores(respostas({}))
+  const plano = prioridadesDoPlano(scores)
+  const valor: Record<string, number> = {
+    'Aquisição': scores.aquisicao, 'Triagem': scores.triagem,
+    'Conversão': scores.conversao, 'CRM': scores.crm, 'Gestão': scores.gestao,
+  }
+  assert.ok(valor[plano[0]] <= valor[plano[1]])
+  assert.ok(valor[plano[1]] <= valor[plano[2]])
+})
+
+test('todo pilar priorizado tem plano cadastrado', () => {
+  for (const pilar of ['Aquisição', 'Triagem', 'Conversão', 'CRM', 'Gestão']) {
+    assert.ok(PLANO_ACAO[pilar], `sem plano para ${pilar}`)
+    assert.ok(PLANO_ACAO[pilar].itens.length > 0)
+  }
+})
+
+test('o indice gravado identifica a opcao mesmo com pesos empatados', () => {
+  // q15 tem nove opcoes valendo 70: sem o indice, todas colapsam na escala 7.
+  const q15 = PERGUNTAS.find((p) => p.id === 'q15')!
+  assert.ok(q15.opcoes.length > 2)
+
+  q15.opcoes.forEach((op, i) => {
+    assert.equal(opcaoRespondida(q15, 7, i), op.texto)
+  })
+})
+
+test('sem indice, pergunta de pesos empatados e marcada como ambigua', () => {
+  const q15 = PERGUNTAS.find((p) => p.id === 'q15')!
+  assert.equal(escalaAmbigua(q15, 7), true)
+  // O fallback ainda devolve algo, mas e a primeira correspondente.
+  assert.equal(opcaoRespondida(q15, 7), q15.opcoes[0].texto)
+})
+
+test('perguntas sem empate resolvem pela escala sozinha', () => {
+  let semEmpate = 0
+  for (const p of PERGUNTAS) {
+    for (const op of p.opcoes) {
+      const escala = valorParaEscala(op.valor)
+      if (escalaAmbigua(p, escala)) continue
+      semEmpate++
+      assert.equal(opcaoRespondida(p, escala), op.texto)
+    }
+  }
+  assert.ok(semEmpate > 40, `esperava dezenas de opcoes sem empate, houve ${semEmpate}`)
+})
+
+test('escala sem opcao correspondente devolve null', () => {
+  assert.equal(opcaoRespondida(PERGUNTAS[0], 999), null)
 })

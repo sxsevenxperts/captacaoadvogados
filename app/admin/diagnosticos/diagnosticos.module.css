@@ -1,5 +1,5 @@
 .container {
-  max-width: 1200px;
+  max-width: 1240px;
   margin: 0 auto;
 }
 
@@ -7,87 +7,103 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 24px;
+  gap: 1rem;
+  margin-bottom: 1.6rem;
 }
 
 .cabecalho h1 {
-  color: #2c3e50;
-  font-size: 26px;
+  font-family: var(--f-display);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 430;
+  color: var(--mist);
 }
 
 .contagem {
-  color: #999;
-  font-size: 13px;
+  font-size: 0.66rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--turq);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .controles {
   display: grid;
   grid-template-columns: 1fr 200px 200px;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 0.7rem;
+  margin-bottom: 1.2rem;
 }
 
 .busca,
 .filtro {
-  padding: 11px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  background: white;
+  padding: 0.7rem 0.85rem;
+  background: rgba(12, 17, 20, 0.9);
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: var(--mist);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.busca::placeholder {
+  color: var(--sage);
 }
 
 .busca:focus,
 .filtro:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+  border-color: var(--line-turq);
+  background: rgba(31, 216, 196, 0.05);
 }
 
 .erro {
-  background: #fdecea;
-  border: 1px solid #f5c2c0;
-  color: #9b1c16;
-  padding: 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  margin-bottom: 16px;
+  background: var(--alerta-fundo);
+  border: 1px solid var(--alerta-linha);
+  color: var(--alerta);
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
 }
 
 .vazio {
   text-align: center;
-  color: #999;
-  padding: 48px 0;
+  color: var(--sage);
+  padding: 3.5rem 0;
+  font-size: 0.9rem;
 }
 
 .tabela {
-  background: white;
-  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .thead,
 .linha {
   display: grid;
   grid-template-columns: 1.4fr 1.8fr 0.6fr 1fr 1fr 1.2fr 0.7fr;
-  gap: 12px;
+  gap: 0.8rem;
   align-items: center;
-  padding: 14px 18px;
+  padding: 0.85rem 1.1rem;
 }
 
 .thead {
-  background: #f7f7f9;
-  border-bottom: 1px solid #e6e6e6;
-  font-size: 11px;
-  font-weight: 700;
-  color: #777;
+  background: rgba(31, 216, 196, 0.05);
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--turq);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.16em;
 }
 
 .linha {
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 14px;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 0.86rem;
+  color: var(--mist);
+  transition: background 0.2s;
 }
 
 .linha:last-child {
@@ -95,12 +111,12 @@
 }
 
 .linha:hover {
-  background: #fafbff;
+  background: rgba(198, 255, 58, 0.04);
 }
 
 .nome {
-  font-weight: 600;
-  color: #222;
+  font-weight: 500;
+  color: var(--mist);
 }
 
 .contato {
@@ -117,55 +133,62 @@
 }
 
 .contato small {
-  color: #999;
+  color: var(--sage);
+  font-size: 0.75rem;
 }
 
 .nota {
   display: inline-block;
-  padding: 3px 10px;
-  background: #eef0fd;
-  color: #4a58c4;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 13px;
+  padding: 0.2rem 0.6rem;
+  background: rgba(198, 255, 58, 0.1);
+  border: 1px solid var(--line);
+  color: var(--lime);
+  border-radius: 100px;
+  font-weight: 600;
+  font-size: 0.78rem;
 }
 
 .gargalo,
 .cac {
-  color: #555;
+  color: var(--sage);
+  font-size: 0.82rem;
 }
 
 .status {
   display: inline-block;
-  padding: 3px 9px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 700;
+  padding: 0.22rem 0.6rem;
+  border-radius: 100px;
+  font-size: 0.62rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.12em;
   white-space: nowrap;
+  border: 1px solid transparent;
 }
 
-.novo              { background: #e3f2fd; color: #1565c0; }
-.contato_pendente  { background: #fff3e0; color: #e65100; }
-.proposta_enviada  { background: #f3e5f5; color: #6a1b9a; }
-.negociacao        { background: #fce4ec; color: #ad1457; }
-.fechado           { background: #e8f5e9; color: #2e7d32; }
-.rejeitado         { background: #ffebee; color: #c62828; }
+/* Um degradê frio→quente ao longo do funil: turquesa no começo, limão no
+   fechamento, tom de alerta na recusa. */
+.novo              { background: rgba(31, 216, 196, 0.1);  border-color: var(--line-turq); color: var(--turq); }
+.contato_pendente  { background: rgba(127, 240, 226, 0.08); border-color: rgba(127, 240, 226, 0.25); color: var(--turq-soft); }
+.proposta_enviada  { background: rgba(198, 255, 58, 0.07); border-color: var(--line); color: #d8ff7e; }
+.negociacao        { background: rgba(198, 255, 58, 0.1);  border-color: var(--line); color: var(--lime); }
+.fechado           { background: var(--grad-pill); border-color: transparent; color: #06110a; }
+.rejeitado         { background: var(--alerta-fundo); border-color: var(--alerta-linha); color: var(--alerta); }
 
 .acao {
   text-align: right;
 }
 
 .acao a {
-  color: #667eea;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 13px;
+  color: var(--turq);
+  font-weight: 500;
+  font-size: 0.8rem;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
 }
 
 .acao a:hover {
-  text-decoration: underline;
+  border-bottom-color: var(--turq);
 }
 
 @media (max-width: 900px) {
@@ -179,7 +202,7 @@
 
   .linha {
     grid-template-columns: 1fr 1fr;
-    row-gap: 8px;
+    row-gap: 0.5rem;
   }
 
   .acao {
