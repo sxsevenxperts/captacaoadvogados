@@ -16,8 +16,10 @@ const WA_BASE = 'https://wa.me/5588992138011'
 const WA_PADRAO = `${WA_BASE}?text=${encodeURIComponent(
   'Olá! Sou advogado(a)/escritório de advocacia e quero entender como a Seven Xperts pode estruturar minha operação.'
 )}`
-// Agenda da Reunião de Diagnóstico: onde houver CTA de agendamento, aponta aqui.
-const AGENDA = 'https://calendar.google.com/calendar/u/5?cid=c2V2ZW54cGVydHNzeGFjYWRlbXlAZ21haWwuY29t'
+// Agendamento público do Google Calendar (grade de 45 min, Meet automático).
+// Precisa ser o link `calendar.app.google/...`: o formato `calendar.google.com/
+// calendar/u/N?cid=...` só funciona para quem já está logado na conta dona.
+const AGENDA = 'https://calendar.app.google/RFYY8yGSETHkurzL6'
 const INSTAGRAM = 'https://instagram.com/sevenxperts'
 
 const AREAS = [
@@ -679,7 +681,7 @@ export default function LandingPage() {
 
                   <div className="diag-cta-row">
                     <p className="diag-cta-note">
-                      Próximo passo: escolher um horário. A apresentação leva cerca de 40 minutos.
+                      Próximo passo: escolher um horário. A apresentação leva 45 minutos, online pelo Meet ou presencial.
                     </p>
                     <div className="diag-cta-btns">
                       <a className="btn btn-primary" href={AGENDA} target="_blank" rel="noopener noreferrer">Agendar apresentação do diagnóstico</a>
