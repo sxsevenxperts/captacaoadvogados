@@ -7,16 +7,16 @@ Esta pasta precisa de pelo menos um arquivo versionado para existir no
 repositório: o git não guarda diretório vazio, e sem isso a pasta some no
 clone e no build do deploy.
 
-## Pendente
+## Arquivos
 
 | Arquivo | Onde aparece | Especificação |
 |---|---|---|
-| `sergio-ponte.jpg` | Seção "Quem estrutura a operação" | Quadrada (1:1), mínimo 600×600, JPG |
+| `sergio-ponte.jpg` | Seção "Quem estrutura a operação" | 1080×1920 (9:16), JPG |
 
-A seção da bio já está no ar. Enquanto o arquivo não estiver aqui, a página
-mostra as iniciais "SP" em turquesa no lugar — não quebra nem exibe ícone de
-imagem quebrada. Assim que o arquivo existir com esse nome exato, a foto
-aparece sozinha, sem precisar mexer em código.
+A foto é vertical e o quadro da bio é quadrado, então o recorte usa
+`object-fit: cover` com `object-position: 50% 0%` — ancorado no topo, para não
+cortar a cabeça. Ao trocar a foto por uma de proporção diferente, conferir esse
+valor em `app/landing.css`.
 
-O recorte é `object-fit: cover` num quadro quadrado, então imagem muito
-retangular perde as bordas.
+Se o arquivo faltar, a página mostra as iniciais "SP" em turquesa no lugar: não
+quebra nem exibe ícone de imagem quebrada.
