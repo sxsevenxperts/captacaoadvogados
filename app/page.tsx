@@ -126,28 +126,32 @@ export default function PaginaDiagnostico() {
     const cac = incluirCac ? cacPreview : null
 
     try {
-      // Sem .select(): o visitante anônimo tem permissão de INSERT, não de
-      // leitura. Pedir os dados de volta faria a requisição falhar no RLS.
-      const { error } = await supabase.from('diagnosticos').insert({
-        nome: contato.nome.trim(),
-        email: contato.email.trim(),
-        whatsapp: contato.whatsapp.trim(),
-        instagram: contato.instagram.trim() || null,
-        site: contato.site.trim() || null,
-        cidade: contato.cidade.trim() || null,
-        area: contato.area.trim() || null,
-        respostas_json: respostas,
-        cac_investimento_mensal: incluirCac ? cacInputs.investimentoMensal ?? null : null,
-        cac_novos_clientes: incluirCac ? cacInputs.novosClientes ?? null : null,
-        cac_ticket_medio: incluirCac ? cacInputs.ticketMedio ?? null : null,
-        cac_margem: incluirCac ? cacInputs.margem ?? null : null,
-        cac_casos_por_cliente: incluirCac ? cacInputs.casosPorCliente ?? null : null,
-      })
+      const isLocal = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
 
-      if (error) {
-        setErro('Não foi possível enviar o diagnóstico. Tente novamente.')
-        setEnviando(false)
-        return
+      if (!isLocal) {
+        // Sem .select(): o visitante anônimo tem permissão de INSERT, não de
+        // leitura. Pedir os dados de volta faria a requisição falhar no RLS.
+        const { error } = await supabase.from('diagnosticos').insert({
+          nome: contato.nome.trim(),
+          email: contato.email.trim(),
+          whatsapp: contato.whatsapp.trim(),
+          instagram: contato.instagram.trim() || null,
+          site: contato.site.trim() || null,
+          cidade: contato.cidade.trim() || null,
+          area: contato.area.trim() || null,
+          respostas_json: respostas,
+          cac_investimento_mensal: incluirCac ? cacInputs.investimentoMensal ?? null : null,
+          cac_novos_clientes: incluirCac ? cacInputs.novosClientes ?? null : null,
+          cac_ticket_medio: incluirCac ? cacInputs.ticketMedio ?? null : null,
+          cac_margem: incluirCac ? cacInputs.margem ?? null : null,
+          cac_casos_por_cliente: incluirCac ? cacInputs.casosPorCliente ?? null : null,
+        })
+
+        if (error) {
+          setErro('Não foi possível enviar o diagnóstico. Tente novamente.')
+          setEnviando(false)
+          return
+        }
       }
 
       const mensagem = gerarMensagemWhatsapp(contato.nome, gargalo, scores)
