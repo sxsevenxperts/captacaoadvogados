@@ -139,7 +139,17 @@ function brl(v: number): string {
 }
 
 export default function LandingPage() {
-  const supabase = useMemo(() => criarClienteNavegador(), [])
+  // createBrowserClient lanca se as NEXT_PUBLIC_* faltarem no build. Sem esta
+  // guarda, um deploy sem as variaveis derruba a landing inteira em vez de
+  // apenas impedir o envio do diagnostico.
+  const supabase = useMemo(() => {
+    try {
+      return criarClienteNavegador()
+    } catch (e) {
+      console.error('[diagnostico] Supabase indisponivel:', e)
+      return null
+    }
+  }, [])
 
   const [fotoOk, setFotoOk] = useState(true)
 
@@ -302,7 +312,12 @@ export default function LandingPage() {
 
     try {
       const local = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
-      if (!local) {
+      if (!local && !supabase) {
+        setErro('Cadastro indisponível no momento. Fale conosco pelo WhatsApp.')
+        setEnviando(false)
+        return
+      }
+      if (!local && supabase) {
         // Sem .select(): o visitante anônimo tem INSERT, não SELECT.
         // nota_geral e gargalo_principal são preenchidos pelo trigger.
         const { error } = await supabase.from('diagnosticos').insert({
