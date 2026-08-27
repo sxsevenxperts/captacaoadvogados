@@ -5,9 +5,6 @@ import { criarClientePublico } from '@/lib/supabase/client'
 import {
   PERGUNTAS,
   TOTAL_PERGUNTAS,
-  ROTULO_PILAR,
-  DIAGNOSTICO_GARGALO,
-  PLANO_ACAO,
   calcularScores,
   identificarGargalo,
   valorParaEscala,
@@ -365,9 +362,7 @@ export default function LandingPage() {
       `Áreas: ${contato.areas.join(', ')}`,
       contato.instagram.trim() ? `Instagram: ${contato.instagram.trim()}` : '',
       contato.site.trim() ? `Site: ${contato.site.trim()}` : '',
-      `Índice de maturidade: ${total}/100`,
-      `Principal gargalo: ${DIAGNOSTICO_GARGALO[gargalo].titulo}`,
-      'Quero aprofundar o plano de ação.',
+      'Respondi as 15 perguntas e quero agendar a apresentação do diagnóstico.',
     ].filter(Boolean).join('\n')
 
     setResultado({
@@ -394,28 +389,10 @@ export default function LandingPage() {
         : Math.round(((qIndex + 1) / (TOTAL_PERGUNTAS + 1)) * 100)
   const rotuloProgresso =
     etapa === 'intro' ? 'Dados iniciais'
-      : etapa === 'resultado' ? 'Resultado'
+      : etapa === 'resultado' ? 'Registrado'
         : `Pergunta ${qIndex + 1} de ${TOTAL_PERGUNTAS}`
 
   const pergunta = PERGUNTAS[qIndex]
-
-  const prioridades = resultado
-    ? ([
-      ['Aquisição', resultado.scores.aquisicao],
-      ['Triagem', resultado.scores.triagem],
-      ['Conversão', resultado.scores.conversao],
-      ['CRM', resultado.scores.crm],
-      ['Gestão', resultado.scores.gestao],
-    ] as [string, number][]).sort((a, b) => a[1] - b[1]).slice(0, 3)
-    : []
-
-  const nivel = resultado
-    ? resultado.total >= 75
-      ? { titulo: 'Operação mais madura', texto: 'A estrutura apresenta boa maturidade. O foco deve ser otimização, qualidade da demanda e melhoria contínua dos indicadores.' }
-      : resultado.total < 45
-        ? { titulo: 'Gargalos relevantes', texto: 'Existem pontos críticos entre demanda, atendimento, organização e gestão. Antes de ampliar volume, vale corrigir a infraestrutura da jornada.' }
-        : { titulo: 'Operação em estruturação', texto: 'Há base para crescer, mas alguns gargalos ainda tornam o resultado dependente de pessoas, memória ou percepção.' }
-    : null
 
   return (
     <div className="sx-root">
@@ -670,49 +647,27 @@ export default function LandingPage() {
                 </div>
               )}
 
-              {etapa === 'resultado' && resultado && nivel && (
+              {etapa === 'resultado' && resultado && (
                 <div className="diag-view">
                   <div className="diag-result-head">
-                    <div className="diag-result-score">
-                      {resultado.total}<small>Índice de maturidade / 100</small>
-                    </div>
                     <div className="diag-result-text">
-                      <h3 className="diag-result-level">{nivel.titulo}</h3>
-                      <p>{nivel.texto}</p>
+                      <h3 className="diag-result-level">Diagnóstico registrado.</h3>
+                      <p>
+                        Suas 15 respostas foram recebidas e já estão em análise. O resultado
+                        &mdash; índice de maturidade, principal gargalo e plano de ação &mdash;
+                        é apresentado por nós, ao vivo, na sessão estratégica.
+                      </p>
                     </div>
-                  </div>
-
-                  <div className="diag-summary">
-                    {([
-                      ['Aquisição', resultado.scores.aquisicao],
-                      ['Triagem', resultado.scores.triagem],
-                      ['Conversão', resultado.scores.conversao],
-                      ['CRM', resultado.scores.crm],
-                      ['Gestão', resultado.scores.gestao],
-                    ] as [string, number][]).map(([pilar, valor]) => (
-                      <div className="diag-score-card" key={pilar}>
-                        <span>{ROTULO_PILAR[pilar]}</span>
-                        <strong>{Math.round(valor * 10)}/100</strong>
-                      </div>
-                    ))}
                   </div>
 
                   <div className="diag-alert">
-                    <h4>Principal gargalo: {DIAGNOSTICO_GARGALO[resultado.gargalo].titulo}</h4>
-                    <p>{DIAGNOSTICO_GARGALO[resultado.gargalo].texto}</p>
-                  </div>
-
-                  <span className="diag-block-label">Plano de ação recomendado</span>
-                  <div className="diag-roadmap">
-                    {prioridades.map(([pilar], i) => (
-                      <div className="diag-phase" key={pilar}>
-                        <div className="diag-phase-tag">Prioridade {i + 1}</div>
-                        <div className="diag-service-card">
-                          <strong>{PLANO_ACAO[pilar].titulo}</strong>
-                          <ul>{PLANO_ACAO[pilar].itens.map((a) => <li key={a}>{a}</li>)}</ul>
-                        </div>
-                      </div>
-                    ))}
+                    <h4>Por que a leitura não sai automática</h4>
+                    <p>
+                      O mesmo sintoma tem causas diferentes em escritórios diferentes. Na sessão
+                      cruzamos suas respostas com Instagram, site, processo atual e números da
+                      operação antes de definir prioridade &mdash; é isso que separa um plano
+                      aplicável de uma lista genérica.
+                    </p>
                   </div>
 
                   <div className="legal-note" style={{ marginTop: '1.3rem' }}>
@@ -723,12 +678,11 @@ export default function LandingPage() {
 
                   <div className="diag-cta-row">
                     <p className="diag-cta-note">
-                      Na sessão estratégica, cruzamos as respostas com Instagram, site, processo atual
-                      e dados disponíveis para priorizar o que deve ser corrigido primeiro.
+                      Próximo passo: escolher um horário. A apresentação leva cerca de 40 minutos.
                     </p>
                     <div className="diag-cta-btns">
-                      <a className="btn btn-primary" href={AGENDA} target="_blank" rel="noopener noreferrer">Agendar análise do diagnóstico</a>
-                      <a className="btn btn-ghost" href={resultado.linkWhatsapp} target="_blank" rel="noopener noreferrer">Enviar resultado no WhatsApp</a>
+                      <a className="btn btn-primary" href={AGENDA} target="_blank" rel="noopener noreferrer">Agendar apresentação do diagnóstico</a>
+                      <a className="btn btn-ghost" href={resultado.linkWhatsapp} target="_blank" rel="noopener noreferrer">Falar no WhatsApp</a>
                     </div>
                   </div>
                   <button className="diag-restart-link" onClick={refazer}>Refazer diagnóstico</button>
