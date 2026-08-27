@@ -16,7 +16,8 @@ const WA_BASE = 'https://wa.me/5588992138011'
 const WA_PADRAO = `${WA_BASE}?text=${encodeURIComponent(
   'Olá! Sou advogado(a)/escritório de advocacia e quero entender como a Seven Xperts pode estruturar minha operação.'
 )}`
-const AGENDA = 'https://agendasevenxperts.sevenxperts.solutions'
+// Agenda da Reunião de Diagnóstico: onde houver CTA de agendamento, aponta aqui.
+const AGENDA = 'https://calendar.google.com/calendar/u/5?cid=c2V2ZW54cGVydHNzeGFjYWRlbXlAZ21haWwuY29t'
 const INSTAGRAM = 'https://instagram.com/sevenxperts'
 
 const AREAS = [
@@ -1032,7 +1033,7 @@ export default function LandingPage() {
             <p>Antes de investir mais em marketing, identifique se o gargalo está em descoberta, triagem, atendimento, acompanhamento, CRM, automação ou gestão.</p>
             <div className="cta-btns">
               <a className="btn btn-primary" href="#diagnostico">Fazer Diagnóstico 360°</a>
-              <a className="btn btn-ghost" href={AGENDA} target="_blank" rel="noopener noreferrer">Agendar conversa estratégica</a>
+              <a className="btn btn-ghost" href={AGENDA} target="_blank" rel="noopener noreferrer">Agendar Reunião de Diagnóstico</a>
               <a className="btn btn-ghost" href={INSTAGRAM} target="_blank" rel="noopener noreferrer">Instagram</a>
             </div>
             <p className="cta-fine">Diagnóstico inicial · Sem pacote genérico · Recomendação conforme aderência e gargalos identificados</p>
