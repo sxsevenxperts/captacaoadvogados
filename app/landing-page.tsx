@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Image from 'next/image'
 import { criarClientePublico } from '@/lib/supabase/client'
 import {
   PERGUNTAS,
@@ -986,11 +987,13 @@ export default function LandingPage() {
                 {/* Enquanto a foto não estiver em public/, mostra as iniciais
                     em vez do ícone de imagem quebrada. */}
                 {fotoOk ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  // next/image serve WebP/AVIF no tamanho do quadro; o arquivo
+                  // original tem 1080x1920 e o quadro nunca passa de 300px.
+                  <Image
                     src="/sergio-ponte.jpg"
                     alt="Sérgio Ponte, fundador da Seven Xperts"
-                    loading="lazy"
+                    fill
+                    sizes="(max-width: 720px) 260px, 300px"
                     onError={() => setFotoOk(false)}
                   />
                 ) : (
