@@ -73,45 +73,68 @@
   font-size: 0.9rem;
 }
 
-.tabela {
+.tabelaScroll {
   background: var(--panel);
   border: 1px solid var(--line-soft);
   border-radius: 16px;
-  overflow: hidden;
+  /* Onze colunas não cabem em tela estreita. A rolagem fica dentro do card,
+     nunca no corpo da página. */
+  overflow-x: auto;
 }
 
-.thead,
-.linha {
-  display: grid;
-  grid-template-columns: 1.4fr 1.8fr 0.6fr 1fr 1fr 1.2fr 0.7fr;
-  gap: 0.8rem;
-  align-items: center;
-  padding: 0.85rem 1.1rem;
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  white-space: nowrap;
 }
 
-.thead {
-  background: rgba(31, 216, 196, 0.05);
+.tabela th {
+  position: sticky;
+  top: 0;
+  background: #0e1519;
   border-bottom: 1px solid var(--line-soft);
-  font-size: 0.62rem;
+  padding: 0.75rem 0.9rem;
+  text-align: left;
+  font-size: 0.6rem;
   font-weight: 600;
   color: var(--turq);
   text-transform: uppercase;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
 }
 
-.linha {
+.tabela td {
+  padding: 0.7rem 0.9rem;
   border-bottom: 1px solid var(--line-soft);
-  font-size: 0.86rem;
   color: var(--mist);
-  transition: background 0.2s;
+  vertical-align: middle;
 }
 
-.linha:last-child {
+/* Linha divisória vertical entre colunas: é o que separa visualmente um dado
+   do outro quando são muitos campos na mesma linha. */
+.tabela th + th,
+.tabela td + td {
+  border-left: 1px solid var(--line-soft);
+}
+
+.tabela tbody tr:last-child td {
   border-bottom: none;
 }
 
-.linha:hover {
+.tabela tbody tr {
+  transition: background 0.2s;
+}
+
+.tabela tbody tr:hover {
   background: rgba(198, 255, 58, 0.04);
+}
+
+.centro { text-align: center; }
+.direita { text-align: right; }
+
+.data {
+  color: var(--sage);
+  font-size: 0.78rem;
 }
 
 .nome {
@@ -119,22 +142,17 @@
   color: var(--mist);
 }
 
-.contato {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+.mono {
+  font-variant-numeric: tabular-nums;
+  color: var(--mist);
 }
 
-.contato span,
-.contato small {
+.email,
+.areas {
+  max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.contato small {
   color: var(--sage);
-  font-size: 0.75rem;
 }
 
 .nota {
@@ -146,12 +164,11 @@
   border-radius: 100px;
   font-weight: 600;
   font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
 }
 
-.gargalo,
-.cac {
+.gargalo {
   color: var(--sage);
-  font-size: 0.82rem;
 }
 
 .status {
@@ -194,18 +211,5 @@
 @media (max-width: 900px) {
   .controles {
     grid-template-columns: 1fr;
-  }
-
-  .thead {
-    display: none;
-  }
-
-  .linha {
-    grid-template-columns: 1fr 1fr;
-    row-gap: 0.5rem;
-  }
-
-  .acao {
-    text-align: left;
   }
 }

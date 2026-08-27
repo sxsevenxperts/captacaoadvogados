@@ -111,51 +111,63 @@ export default function PaginaDiagnosticos() {
       ) : filtrados.length === 0 ? (
         <p className={styles.vazio}>Nenhum diagnóstico encontrado.</p>
       ) : (
-        <div className={styles.tabela}>
-          <div className={styles.thead}>
-            <div>Nome</div>
-            <div>Contato</div>
-            <div>Nota</div>
-            <div>Gargalo</div>
-            <div>CAC</div>
-            <div>Status</div>
-            <div />
-          </div>
+        // Tabela real, não grid de divs: uma linha por pessoa e uma coluna por
+        // dado, com cabeçalho fixo e rolagem horizontal quando não couber.
+        <div className={styles.tabelaScroll}>
+          <table className={styles.tabela}>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Nome</th>
+                <th>WhatsApp</th>
+                <th>E-mail</th>
+                <th>Cidade</th>
+                <th>Áreas</th>
+                <th className={styles.centro}>Nota</th>
+                <th>Gargalo</th>
+                <th className={styles.direita}>CAC</th>
+                <th>Status</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {filtrados.map((d) => {
+                const cac = calcularCac({
+                  investimentoMensal: d.cac_investimento_mensal ?? undefined,
+                  novosClientes: d.cac_novos_clientes ?? undefined,
+                  ticketMedio: d.cac_ticket_medio ?? undefined,
+                  margem: d.cac_margem ?? undefined,
+                  casosPorCliente: d.cac_casos_por_cliente ?? undefined,
+                })
 
-          {filtrados.map((d) => {
-            const cac = calcularCac({
-              investimentoMensal: d.cac_investimento_mensal ?? undefined,
-              novosClientes: d.cac_novos_clientes ?? undefined,
-              ticketMedio: d.cac_ticket_medio ?? undefined,
-              margem: d.cac_margem ?? undefined,
-              casosPorCliente: d.cac_casos_por_cliente ?? undefined,
-            })
-
-            return (
-              <div key={d.id} className={styles.linha}>
-                <div className={styles.nome}>{d.nome}</div>
-                <div className={styles.contato}>
-                  <span>{d.email}</span>
-                  <small>{d.whatsapp}</small>
-                </div>
-                <div>
-                  <span className={styles.nota}>{Number(d.nota_geral).toFixed(1)}</span>
-                </div>
-                <div className={styles.gargalo}>{d.gargalo_principal}</div>
-                <div className={styles.cac}>
-                  {cac ? formatarReal(cac.cac) : '—'}
-                </div>
-                <div>
-                  <span className={`${styles.status} ${styles[d.status_comercial.toLowerCase()]}`}>
-                    {d.status_comercial.replace(/_/g, ' ')}
-                  </span>
-                </div>
-                <div className={styles.acao}>
-                  <Link href={`/admin/diagnosticos/${d.id}`}>Abrir</Link>
-                </div>
-              </div>
-            )
-          })}
+                return (
+                  <tr key={d.id}>
+                    <td className={styles.data}>
+                      {new Date(d.criado_em).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className={styles.nome}>{d.nome}</td>
+                    <td className={styles.mono}>{d.whatsapp}</td>
+                    <td className={styles.email} title={d.email}>{d.email}</td>
+                    <td>{d.cidade ?? '—'}</td>
+                    <td className={styles.areas} title={d.area ?? ''}>{d.area ?? '—'}</td>
+                    <td className={styles.centro}>
+                      <span className={styles.nota}>{Number(d.nota_geral).toFixed(1)}</span>
+                    </td>
+                    <td className={styles.gargalo}>{d.gargalo_principal}</td>
+                    <td className={styles.direita}>{cac ? formatarReal(cac.cac) : '—'}</td>
+                    <td>
+                      <span className={`${styles.status} ${styles[d.status_comercial.toLowerCase()]}`}>
+                        {d.status_comercial.replace(/_/g, ' ')}
+                      </span>
+                    </td>
+                    <td className={styles.acao}>
+                      <Link href={`/admin/diagnosticos/${d.id}`}>Abrir</Link>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
