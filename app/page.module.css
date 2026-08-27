@@ -185,6 +185,62 @@
   text-align: center;
 }
 
+.confirmacao {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.confirmacao h2 {
+  color: #25d366;
+  font-size: 22px;
+  margin: 0;
+}
+
+.descricao {
+  color: #555;
+  font-size: 14px;
+  margin: 0;
+}
+
+.lista {
+  text-align: left;
+  color: #333;
+  font-size: 14px;
+  margin: 8px 0;
+  padding-left: 20px;
+  line-height: 1.8;
+}
+
+.lista li {
+  margin: 6px 0;
+}
+
+.agendamento {
+  border: 2px solid #4285f4;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f0f6ff;
+  margin: 12px 0;
+}
+
+.subtitulo {
+  color: #333;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+
+.contato {
+  margin-top: 12px;
+}
+
+.contato p {
+  color: #666;
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+
 .scores {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -238,6 +294,30 @@
   margin: 0;
 }
 
+.acoes {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.agendar {
+  display: inline-block;
+  padding: 13px 26px;
+  background: #4285f4;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 15px;
+  transition: background 0.2s;
+}
+
+.agendar:hover {
+  background: #357ae8;
+}
+
 .whatsapp {
   display: inline-block;
   padding: 13px 26px;
@@ -246,11 +326,49 @@
   text-decoration: none;
   border-radius: 6px;
   font-weight: 600;
-  margin-top: 12px;
+  font-size: 15px;
+  margin-top: 0;
+  transition: background 0.2s;
 }
 
 .whatsapp:hover {
   background: #1eb356;
+}
+
+.areaFieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.areaFieldset label {
+  color: #555;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.areaCheckboxes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
 }
 
 @media (max-width: 600px) {
@@ -259,6 +377,10 @@
   }
 
   .scores {
+    grid-template-columns: 1fr;
+  }
+
+  .areaCheckboxes {
     grid-template-columns: 1fr;
   }
 }

@@ -12,6 +12,9 @@ dist/
 .next/
 out/
 
+# Artefatos de build incremental do TypeScript
+*.tsbuildinfo
+
 # Misc
 .DS_Store
 .env
