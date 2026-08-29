@@ -1,11 +1,31 @@
 import type { DiagnosticoRespostas, PillarScores } from './types'
 
 /**
- * Opção de resposta. `valor` é a maturidade de 0 a 100 exibida ao usuário;
- * o banco recebe a mesma resposta convertida para o inteiro 1..10 exigido
- * pela constraint `respostas_validas` (ver sql/schema.sql).
+ * Opção de resposta.
+ *
+ * `valor` é o nível de maturidade num mostrador de 0 a 100, mas o único número
+ * que sai daqui é o inteiro 1..10 exigido pela constraint `respostas_validas`
+ * (ver sql/schema.sql). Por isso todo `valor` do catálogo é múltiplo de 10:
+ * `valorParaEscala` fica exata e duas opções só caem no mesmo balde quando têm
+ * o MESMO valor — nunca por arredondamento. Antes disso, 80 e 75 viravam ambos
+ * 8 e um escritório com 500 contatos pontuava igual a um com 70.
+ *
+ * `desconhecimento` marca a opção em que o respondente admite não saber o
+ * próprio número ("Não sabemos", "Raramente sabemos"). É diferente de relatar
+ * um estado ruim ("Tudo é manual", "Não existe padrão"), que é resposta honesta
+ * e pontua acima. A regra que essa marca sustenta, válida nas 15 perguntas:
+ * desconhecer nunca pode pontuar melhor que reportar um número ruim, senão o
+ * formulário ensina a fugir da pergunta e contamina o pilar inteiro.
+ *
+ * `pilarAlvo` só existe na q15: liga a dor declarada ao pilar que ela aponta,
+ * para ordenar o plano de ação em vez de virar nota.
  */
-export type Opcao = { texto: string; valor: number }
+export type Opcao = {
+  texto: string
+  valor: number
+  desconhecimento?: true
+  pilarAlvo?: string
+}
 
 export type Pergunta = {
   id: keyof DiagnosticoRespostas
@@ -37,12 +57,12 @@ export const PERGUNTAS: Pergunta[] = [
     texto: 'De onde vêm hoje a maior parte dos novos clientes do escritório?',
     ajuda: 'Escolha a fonte predominante.',
     opcoes: [
-      { texto: 'Indicações', valor: 45 },
+      { texto: 'Indicações', valor: 40 },
       { texto: 'Google / busca orgânica', valor: 80 },
-      { texto: 'Instagram / conteúdo', valor: 65 },
-      { texto: 'Anúncios permitidos', valor: 75 },
-      { texto: 'Parceiros / networking', valor: 60 },
-      { texto: 'Não sabemos', valor: 20 },
+      { texto: 'Instagram / conteúdo', valor: 60 },
+      { texto: 'Anúncios permitidos', valor: 70 },
+      { texto: 'Parceiros / networking', valor: 50 },
+      { texto: 'Não sabemos', valor: 20, desconhecimento: true },
     ],
   },
   {
@@ -52,12 +72,12 @@ export const PERGUNTAS: Pergunta[] = [
     texto: 'Quantos novos contatos o escritório recebe, em média, por mês?',
     ajuda: 'O objetivo é distinguir falta de demanda de vazamento operacional.',
     opcoes: [
-      { texto: 'Até 10', valor: 35 },
-      { texto: '11 a 30', valor: 55 },
+      { texto: 'Até 10', valor: 40 },
+      { texto: '11 a 30', valor: 60 },
       { texto: '31 a 60', valor: 70 },
-      { texto: '61 a 100', valor: 75 },
-      { texto: 'Mais de 100', valor: 80 },
-      { texto: 'Não sabemos', valor: 20 },
+      { texto: '61 a 100', valor: 80 },
+      { texto: 'Mais de 100', valor: 90 },
+      { texto: 'Não sabemos', valor: 20, desconhecimento: true },
     ],
   },
   {
@@ -67,7 +87,7 @@ export const PERGUNTAS: Pergunta[] = [
     texto: 'Você sabe qual canal está associado aos contratos, e não apenas aos contatos?',
     ajuda: 'Conectar origem a contrato evita avaliar marketing apenas por volume.',
     opcoes: [
-      { texto: 'Sim', valor: 95 },
+      { texto: 'Sim', valor: 100 },
       { texto: 'Parcialmente', valor: 60 },
       { texto: 'Não', valor: 20 },
     ],
@@ -82,10 +102,10 @@ export const PERGUNTAS: Pergunta[] = [
     ajuda: 'Aderência significa compatibilidade com área, critérios e capacidade operacional.',
     opcoes: [
       { texto: 'Mais de 70%', valor: 90 },
-      { texto: '50% a 70%', valor: 75 },
-      { texto: '30% a 50%', valor: 55 },
+      { texto: '50% a 70%', valor: 80 },
+      { texto: '30% a 50%', valor: 60 },
       { texto: 'Menos de 30%', valor: 30 },
-      { texto: 'Não sabemos', valor: 20 },
+      { texto: 'Não sabemos', valor: 20, desconhecimento: true },
     ],
   },
   {
@@ -95,12 +115,16 @@ export const PERGUNTAS: Pergunta[] = [
     texto: 'Quem faz o primeiro atendimento?',
     ajuda:
       'Quanto mais cedo o advogado entra, maior pode ser o consumo de tempo técnico em tarefas administrativas.',
+    // Recepção e Equipe específica empatavam em 90 e, com Assistente em 85, as
+    // três viravam 9. Desempate: função dedicada e treinada > recepção com
+    // roteiro > assistente que acumula a tarefa com outras. A ordem relativa
+    // original é preservada; só a nota de Recepção e Assistente desceu um balde.
     opcoes: [
-      { texto: 'Recepção / secretária com processo', valor: 90 },
-      { texto: 'Assistente com processo', valor: 85 },
+      { texto: 'Recepção / secretária com processo', valor: 80 },
+      { texto: 'Assistente com processo', valor: 70 },
       { texto: 'Equipe específica', valor: 90 },
       { texto: 'O próprio advogado', valor: 40 },
-      { texto: 'Depende do dia', valor: 35 },
+      { texto: 'Depende do dia', valor: 30 },
       { texto: 'Não existe padrão', valor: 20 },
     ],
   },
@@ -111,8 +135,8 @@ export const PERGUNTAS: Pergunta[] = [
     texto: 'Existe um processo de triagem antes do contato chegar ao advogado?',
     ajuda: 'Triagem administrativa não substitui consulta nem análise jurídica.',
     opcoes: [
-      { texto: 'Sim, estruturado', valor: 95 },
-      { texto: 'Parcialmente', valor: 65 },
+      { texto: 'Sim, estruturado', valor: 100 },
+      { texto: 'Parcialmente', valor: 70 },
       { texto: 'Muito pouco', valor: 40 },
       { texto: 'Não existe', valor: 20 },
     ],
@@ -128,11 +152,11 @@ export const PERGUNTAS: Pergunta[] = [
     ajuda:
       'Não é aconselhamento jurídico; é recepção e orientação inicial do fluxo de atendimento.',
     opcoes: [
-      { texto: 'Até 15 minutos', valor: 95 },
+      { texto: 'Até 15 minutos', valor: 100 },
       { texto: '15 a 30 minutos', valor: 80 },
-      { texto: '30 min a 1 hora', valor: 65 },
-      { texto: '1 a 4 horas', valor: 45 },
-      { texto: 'Mais de 4 horas', valor: 25 },
+      { texto: '30 min a 1 hora', valor: 70 },
+      { texto: '1 a 4 horas', valor: 50 },
+      { texto: 'Mais de 4 horas', valor: 30 },
       { texto: 'Não existe padrão', valor: 20 },
     ],
   },
@@ -143,8 +167,8 @@ export const PERGUNTAS: Pergunta[] = [
     texto: 'Existe um processo definido entre primeiro contato e contratação?',
     ajuda: 'Exemplo: contato → triagem → consulta → proposta → acompanhamento → contratação.',
     opcoes: [
-      { texto: 'Sim, totalmente', valor: 95 },
-      { texto: 'Parcialmente', valor: 65 },
+      { texto: 'Sim, totalmente', valor: 100 },
+      { texto: 'Parcialmente', valor: 70 },
       { texto: 'Depende do profissional', valor: 40 },
       { texto: 'Não existe', valor: 20 },
     ],
@@ -158,10 +182,10 @@ export const PERGUNTAS: Pergunta[] = [
     ajuda:
       'Acompanhamento deve respeitar a relação já iniciada e os limites éticos aplicáveis.',
     opcoes: [
-      { texto: 'Existe acompanhamento estruturado', valor: 95 },
+      { texto: 'Existe acompanhamento estruturado', valor: 100 },
       { texto: 'Alguém lembra manualmente', valor: 60 },
-      { texto: 'Depende do advogado', valor: 45 },
-      { texto: 'Esperamos ele retornar', valor: 25 },
+      { texto: 'Depende do advogado', valor: 50 },
+      { texto: 'Esperamos ele retornar', valor: 30 },
       { texto: 'Normalmente perdemos o contato', valor: 10 },
     ],
   },
@@ -175,11 +199,11 @@ export const PERGUNTAS: Pergunta[] = [
     ajuda:
       'CRM significa Customer Relationship Management — Gestão de Relacionamento com Clientes.',
     opcoes: [
-      { texto: 'CRM usado de forma consistente', valor: 95 },
+      { texto: 'CRM usado de forma consistente', valor: 100 },
       { texto: 'CRM usado parcialmente', valor: 70 },
-      { texto: 'Planilha', valor: 55 },
-      { texto: 'WhatsApp', valor: 35 },
-      { texto: 'Cada pessoa controla as próprias', valor: 25 },
+      { texto: 'Planilha', valor: 60 },
+      { texto: 'WhatsApp', valor: 40 },
+      { texto: 'Cada pessoa controla as próprias', valor: 30 },
       { texto: 'Não existe controle', valor: 10 },
     ],
   },
@@ -193,8 +217,10 @@ export const PERGUNTAS: Pergunta[] = [
       { texto: 'Pouco; já automatizamos o essencial', valor: 90 },
       { texto: 'Parte relevante', valor: 60 },
       { texto: 'Quase tudo é manual', valor: 30 },
-      { texto: 'Tudo é manual', valor: 15 },
-      { texto: 'Não sabemos', valor: 35 },
+      { texto: 'Tudo é manual', valor: 20 },
+      // Valia 35 e ficava acima de "Tudo é manual": quem admitia o problema
+      // saía pior que quem fugia da pergunta.
+      { texto: 'Não sabemos', valor: 10, desconhecimento: true },
     ],
   },
   {
@@ -207,10 +233,11 @@ export const PERGUNTAS: Pergunta[] = [
       'Considere apenas atividades anteriores à análise jurídica que poderiam ser organizadas por processo.',
     opcoes: [
       { texto: 'Menos de 30 min', valor: 90 },
-      { texto: '30 min a 1 hora', valor: 75 },
+      { texto: '30 min a 1 hora', valor: 80 },
       { texto: '1 a 2 horas', valor: 50 },
-      { texto: 'Mais de 2 horas', valor: 25 },
-      { texto: 'Não sabemos', valor: 35 },
+      { texto: 'Mais de 2 horas', valor: 30 },
+      // Mesmo defeito da q11: valia 35, acima de "Mais de 2 horas".
+      { texto: 'Não sabemos', valor: 20, desconhecimento: true },
     ],
   },
 
@@ -222,10 +249,10 @@ export const PERGUNTAS: Pergunta[] = [
     texto: 'O escritório sabe por que potenciais clientes não avançam?',
     ajuda: 'Motivos de perda tornam o gargalo mensurável.',
     opcoes: [
-      { texto: 'Sim, registramos os motivos', valor: 95 },
+      { texto: 'Sim, registramos os motivos', valor: 100 },
       { texto: 'Temos boa percepção, mas sem registro', valor: 60 },
-      { texto: 'Raramente sabemos', valor: 35 },
-      { texto: 'Não sabemos', valor: 15 },
+      { texto: 'Raramente sabemos', valor: 40, desconhecimento: true },
+      { texto: 'Não sabemos', valor: 20, desconhecimento: true },
     ],
   },
   {
@@ -236,33 +263,61 @@ export const PERGUNTAS: Pergunta[] = [
     ajuda:
       'Ex.: contatos, qualificação, comparecimento, conversão, ticket médio, CAC e motivos de perda.',
     opcoes: [
-      { texto: 'Acompanhamos vários indicadores de forma recorrente', valor: 95 },
-      { texto: 'Acompanhamos alguns', valor: 65 },
+      { texto: 'Acompanhamos vários indicadores de forma recorrente', valor: 100 },
+      { texto: 'Acompanhamos alguns', valor: 70 },
       { texto: 'Apenas volume de contatos / contratos', valor: 40 },
       { texto: 'Quase nenhum', valor: 20 },
       { texto: 'Nenhum', valor: 10 },
     ],
   },
+  /**
+   * A q15 é percepção declarada, não maturidade medida. Ela tem dois papéis,
+   * deliberadamente separados:
+   *
+   * 1. Como NOTA, mede a única maturidade que essa pergunta consegue medir de
+   *    verdade: o escritório sabe apontar onde dói? Apontar uma dor específica
+   *    sem indicador que a comprove vale o mesmo que a q13 dá a "boa percepção,
+   *    mas sem registro" (60); não saber onde está o problema é um buraco de
+   *    gestão (20). As nove dores empatam de propósito — não existe ranking de
+   *    maturidade entre "poucos contatos" e "falta de CRM", e inventar um
+   *    fabricaria julgamento clínico que ninguém sustenta. Valia 70 para todas,
+   *    o que inflava o pilar Gestão de graça.
+   *
+   * 2. Como CONTEÚDO, a dor escolhida aponta um pilar (`pilarAlvo`) e ordena o
+   *    plano de ação — ver `prioridadesDoPlano`. É aqui que "sua percepção será
+   *    cruzada com as respostas anteriores" deixa de ser promessa: escolher
+   *    "Poucos contatos" e escolher "Falta de CRM" passam a produzir planos
+   *    diferentes. A identidade exata da opção vem do índice em `escolhas_json`,
+   *    que já é gravado — nenhuma coluna nova é necessária.
+   *
+   * Por que ela continua entrando na média do pilar: tirá-la deixaria Gestão
+   * com 2 perguntas (quebrando a simetria de 3 por pilar que sustenta o
+   * desempate do gargalo) e faria a nota da tela divergir da que o trigger
+   * `aplicar_diagnostico` grava a partir de q13+q14+q15.
+   */
   {
     id: 'q15',
     pilar: 'Gestão',
     bloco: 'Prioridade',
     texto: 'Qual problema parece mais urgente hoje?',
-    ajuda: 'Sua percepção será cruzada com as respostas anteriores.',
+    ajuda: 'Sua percepção ordena o plano de ação e é cruzada com as respostas anteriores.',
     opcoes: [
-      { texto: 'Dependência de indicação', valor: 70 },
-      { texto: 'Poucos contatos', valor: 70 },
-      { texto: 'Contatos pouco aderentes', valor: 70 },
-      { texto: 'Advogado preso na triagem', valor: 70 },
-      { texto: 'WhatsApp desorganizado', valor: 70 },
-      { texto: 'Poucas contratações', valor: 70 },
-      { texto: 'Falta de acompanhamento', valor: 70 },
-      { texto: 'Falta de CRM / automação', valor: 70 },
-      { texto: 'Falta de indicadores', valor: 70 },
-      { texto: 'Não sabemos onde está o problema', valor: 15 },
+      { texto: 'Dependência de indicação', valor: 60, pilarAlvo: 'Aquisição' },
+      { texto: 'Poucos contatos', valor: 60, pilarAlvo: 'Aquisição' },
+      { texto: 'Contatos pouco aderentes', valor: 60, pilarAlvo: 'Triagem' },
+      { texto: 'Advogado preso na triagem', valor: 60, pilarAlvo: 'Triagem' },
+      { texto: 'WhatsApp desorganizado', valor: 60, pilarAlvo: 'CRM' },
+      { texto: 'Poucas contratações', valor: 60, pilarAlvo: 'Conversão' },
+      { texto: 'Falta de acompanhamento', valor: 60, pilarAlvo: 'Conversão' },
+      { texto: 'Falta de CRM / automação', valor: 60, pilarAlvo: 'CRM' },
+      { texto: 'Falta de indicadores', valor: 60, pilarAlvo: 'Gestão' },
+      { texto: 'Não sabemos onde está o problema', valor: 20, desconhecimento: true },
     ],
   },
 ]
+
+/** Pergunta de percepção: a única cuja escolha ordena em vez de rankear. */
+export const ID_PRIORIDADE_DECLARADA = 'q15'
 
 export const TOTAL_PERGUNTAS = PERGUNTAS.length
 
@@ -270,6 +325,11 @@ export const TOTAL_PERGUNTAS = PERGUNTAS.length
  * Converte a maturidade de 0..100 no inteiro 1..10 que o banco aceita.
  * A constraint `respostas_validas` rejeita decimais e valores fora da faixa,
  * então o clamp aqui não é decorativo: sem ele o INSERT falha inteiro.
+ *
+ * Continua arredondando porque também recebe valores fora do catálogo (a tela
+ * usa 50 para pergunta não respondida). Para as opções catalogadas o
+ * arredondamento virou identidade: como todo `valor` é múltiplo de 10, opções
+ * com maturidades diferentes caem sempre em baldes diferentes.
  */
 export function valorParaEscala(valor: number): number {
   return Math.min(10, Math.max(1, Math.round(valor / 10)))
@@ -324,14 +384,42 @@ export function identificarGargalo(scores: PillarScores): string {
 }
 
 /**
+ * Pilar apontado pela dor declarada na q15, a partir do índice já gravado em
+ * `escolhas_json`. Devolve null quando não há escolha registrada, quando o
+ * índice não existe ou quando a opção marcada é "não sabemos onde está o
+ * problema" — que, justamente, não aponta nada.
+ */
+export function pilarDaPrioridadeDeclarada(
+  indice: number | null | undefined
+): string | null {
+  if (indice == null) return null
+  const pergunta = PERGUNTAS.find((p) => p.id === ID_PRIORIDADE_DECLARADA)
+  return pergunta?.opcoes[indice]?.pilarAlvo ?? null
+}
+
+/**
  * Os três pilares mais fracos, do pior para o menos pior. É a ordem do plano
  * de ação: o gargalo principal é sempre o primeiro item.
  *
- * Empate resolve pela ordem do funil (Aquisição → Triagem → Conversão → CRM →
- * Gestão), a mesma regra de `identificarGargalo`: corrigir uma etapa adiante
- * sem resolver a anterior só empurra o problema.
+ * `prioridadeDeclarada` é o pilar apontado pela q15 (use
+ * `pilarDaPrioridadeDeclarada`). Ela desempata, nunca decide: só reordena
+ * pilares com a MESMA nota e nunca desloca do topo o gargalo medido. Percepção
+ * que contraria o número não pode reescrever o número — mas onde o número é
+ * indiferente, começar pelo que o escritório já sente é mais útil do que
+ * deixar a ordem fixa do funil decidir sozinha.
+ *
+ * O empate remanescente resolve pela ordem do funil (Aquisição → Triagem →
+ * Conversão → CRM → Gestão), a mesma regra de `identificarGargalo`: corrigir
+ * uma etapa adiante sem resolver a anterior só empurra o problema.
  */
-export function prioridadesDoPlano(scores: PillarScores): string[] {
+export function prioridadesDoPlano(
+  scores: PillarScores,
+  prioridadeDeclarada?: string | null
+): string[] {
+  // Fixar o gargalo em primeiro mantém a tela alinhada com o
+  // gargalo_principal que o trigger grava, que não conhece a q15.
+  const gargalo = identificarGargalo(scores)
+
   const pilares: [string, number][] = [
     ['Aquisição', scores.aquisicao],
     ['Triagem', scores.triagem],
@@ -341,8 +429,14 @@ export function prioridadesDoPlano(scores: PillarScores): string[] {
   ]
 
   return pilares
-    .map(([nome, valor], ordem) => ({ nome, valor, ordem }))
-    .sort((a, b) => a.valor - b.valor || a.ordem - b.ordem)
+    .map(([nome, valor], ordem) => ({
+      nome,
+      valor,
+      // 0 gargalo medido, 1 dor declarada, 2 o resto. Só vale dentro do empate.
+      peso: nome === gargalo ? 0 : nome === prioridadeDeclarada ? 1 : 2,
+      ordem,
+    }))
+    .sort((a, b) => a.valor - b.valor || a.peso - b.peso || a.ordem - b.ordem)
     .slice(0, 3)
     .map((p) => p.nome)
 }
@@ -351,9 +445,9 @@ export function prioridadesDoPlano(scores: PillarScores): string[] {
  * Texto da opção marcada pelo visitante.
  *
  * Prefere o índice gravado em `escolhas_json`, que é exato. Só quando ele não
- * existe — diagnósticos anteriores a essa coluna — cai na busca pela escala,
- * que é ambígua: cinco perguntas têm opções de mesmo peso, e a q15 tem nove.
- * Nesses casos devolve a primeira correspondente, que pode não ser a marcada.
+ * existe — diagnósticos anteriores a essa coluna — cai na busca pela escala.
+ * Hoje a única pergunta ambígua é a q15, cujas nove dores empatam de propósito;
+ * nela a busca devolve a primeira correspondente, que pode não ser a marcada.
  */
 export function opcaoRespondida(
   pergunta: Pergunta,
