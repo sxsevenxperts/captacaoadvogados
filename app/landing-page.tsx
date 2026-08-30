@@ -247,7 +247,6 @@ export default function LandingPage() {
     })
   }
 
-  /** Espelha a constraint `dados_contato_validos` do schema. */
   function validarIntro(): string {
     const nome = contato.nome.trim()
     const email = contato.email.trim()
@@ -255,8 +254,6 @@ export default function LandingPage() {
     if (nome.length < 2 || nome.length > 200) return 'Informe o nome do advogado ou escritório.'
     if (email.length < 3 || email.indexOf('@') < 1) return 'Informe um e-mail válido.'
     if (digitos.length < 8 || digitos.length > 15) return 'Informe um WhatsApp válido, com DDD.'
-    if (!contato.cidade.trim()) return 'Informe a cidade e o estado.'
-    if (contato.areas.length === 0) return 'Selecione ao menos uma área de atuação.'
     return ''
   }
 
@@ -438,18 +435,18 @@ export default function LandingPage() {
             <div className="reveal in">
               <span className="eyebrow">Marketing Jurídico · Atendimento · CRM · Automação</span>
               <h1>
-                Seu escritório pode não perder contratos<br />
-                por falta de conhecimento jurídico.<br />
-                <em className="grad-text">Pode perder por operação.</em>
+                De cada 100 contatos que seu escritório recebe,<br />
+                quantos realmente viram contratos?<br />
+                <em className="grad-text">A maioria perde 40–70 por operação, não por jurisprudência.</em>
               </h1>
               <p className="lead">
-                Estruturamos a jornada entre ser encontrado, organizar o primeiro contato,
-                qualificar, acompanhar e medir oportunidades — sem transformar a advocacia
-                em comércio e preservando a atuação jurídica do advogado.
+                Identifique exatamente onde está o vazamento: origem dos contatos,
+                tempo de triagem, velocidade de resposta, processo de conversão, pipeline
+                e pós-atendimento. Estruture cada etapa sem transformar advocacia em comércio.
               </p>
               <div className="hero-cta">
                 <a className="btn btn-primary" href="#diagnostico">
-                  Fazer Diagnóstico 360°
+                  Descobrir o gargalo em 5 min
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                 </a>
                 <a className="btn btn-ghost" href={WA_PADRAO} target="_blank" rel="noopener noreferrer">Falar com a Seven Xperts</a>
@@ -581,11 +578,6 @@ export default function LandingPage() {
                         value={contato.nome} onChange={(e) => setContato({ ...contato, nome: e.target.value })} />
                     </div>
                     <div className="diag-field">
-                      <label htmlFor="d-city">Cidade / Estado *</label>
-                      <input className="diag-text" id="d-city" maxLength={120} placeholder="Ex.: Sobral / CE"
-                        value={contato.cidade} onChange={(e) => setContato({ ...contato, cidade: e.target.value })} />
-                    </div>
-                    <div className="diag-field">
                       <label htmlFor="d-email">E-mail *</label>
                       <input className="diag-text" id="d-email" type="email" maxLength={320} placeholder="voce@escritorio.com.br"
                         value={contato.email} onChange={(e) => setContato({ ...contato, email: e.target.value })} />
@@ -594,35 +586,6 @@ export default function LandingPage() {
                       <label htmlFor="d-wa">WhatsApp *</label>
                       <input className="diag-text" id="d-wa" type="tel" maxLength={30} placeholder="(88) 99999-9999"
                         value={contato.whatsapp} onChange={(e) => setContato({ ...contato, whatsapp: e.target.value })} />
-                    </div>
-                    <div className="diag-field">
-                      <label htmlFor="d-ig">Instagram profissional</label>
-                      <input className="diag-text" id="d-ig" maxLength={200} placeholder="@seuescritorio"
-                        value={contato.instagram} onChange={(e) => setContato({ ...contato, instagram: e.target.value })} />
-                    </div>
-                    <div className="diag-field">
-                      <label htmlFor="d-site">Site, se tiver</label>
-                      <input className="diag-text" id="d-site" maxLength={500} placeholder="https://..."
-                        value={contato.site} onChange={(e) => setContato({ ...contato, site: e.target.value })} />
-                    </div>
-                    <div className="diag-field full">
-                      <label>Áreas de atuação * (até {MAX_AREAS})</label>
-                      <div className="diag-areas">
-                        {AREAS.map((area) => {
-                          const marcada = contato.areas.includes(area)
-                          const bloqueada = !marcada && contato.areas.length >= MAX_AREAS
-                          return (
-                            <label
-                              key={area}
-                              className={`diag-area${marcada ? ' selected' : ''}${bloqueada ? ' disabled' : ''}`}
-                            >
-                              <input type="checkbox" checked={marcada} disabled={bloqueada}
-                                onChange={() => alternarArea(area)} />
-                              {area}
-                            </label>
-                          )
-                        })}
-                      </div>
                     </div>
                   </div>
 
@@ -701,10 +664,10 @@ export default function LandingPage() {
 
                   <div className="diag-cta-row">
                     <p className="diag-cta-note">
-                      Próximo passo: escolher um horário. A apresentação leva 45 minutos, online pelo Meet ou presencial.
+                      Próximo passo: agendar sua apresentação do diagnóstico detalhado — recebemos em até 48h. Online pelo Meet ou presencial.
                     </p>
                     <div className="diag-cta-btns">
-                      <a className="btn btn-primary" href={AGENDA} target="_blank" rel="noopener noreferrer">Agendar apresentação do diagnóstico</a>
+                      <a className="btn btn-primary" href={AGENDA} target="_blank" rel="noopener noreferrer">Agendar em 48h →</a>
                       <a className="btn btn-ghost" href={resultado.linkWhatsapp} target="_blank" rel="noopener noreferrer">Falar no WhatsApp</a>
                     </div>
                   </div>
